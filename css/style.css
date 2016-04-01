@@ -1,5 +1,5 @@
 body {
-    font-size: 12pt;
+    font-size: 14pt;
     margin-top: 8em;
     font-family: sans-serif;
 }
@@ -22,13 +22,13 @@ input {
 }
 
 #startstop {
-    width: 75%;
+    width: 85%;
     margin: 0 auto;
     margin-top: 1.5em;
 }
 
 button {
-    font-size: 1.25em;
+    font-size: 1.4em;
     padding: 0.25em
 }
 
