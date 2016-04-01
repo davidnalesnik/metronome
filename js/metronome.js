@@ -32,12 +32,16 @@
     }
 
 /*************************************************************/
-var on = document.getElementById('start');
-var off = document.getElementById('stop');
-var inputBox = document.querySelector('input');
+var on = document.getElementById('start'),
+    off = document.getElementById('stop'),
+    inputBox = document.querySelector('input'),
+    subdivide = document.getElementById('subdivide'),
+    duple = document.getElementById('duple'),
+    triple = document.getElementById('triple');
 
-var beepingStarted = false;
-var secondsPerBeep;
+var playSubdivisions = false,
+    beepingStarted = false,
+    secondsPerBeep;
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -55,30 +59,35 @@ request.onload = function () {
             setSecondsPerBeat();
             if (!beepingStarted) {
                 beepingStarted = true;
-                playBeepLoop(buffer, audioCtx.currentTime, secondsPerBeep);
+                playBeatLoop(buffer, audioCtx.currentTime, secondsPerBeep);
             }
         };
         /**
             Set a new speed.
         */
         inputBox.onchange = function() {
-            setSecondsPerBeat()
+            setSecondsPerBeat();
+            playSubdivisions = false;
         };
+
         off.onclick = function() {
             beepingStarted = false;
+        };
+        /** Subdivide */
+        subdivide.onclick = function() {
+            playSubdivisions = !playSubdivisions;
         };
     });
 };
 
 request.send();
 
-
 function setSecondsPerBeat() {
     var beatsPerMinute = document.getElementById('bpm').value;
     secondsPerBeep = 60/beatsPerMinute;
 }
 
-function playBeepLoop(buffer, time) {
+function playBeatLoop(buffer, time) {
     if (beepingStarted) {
         var bufferSource = audioCtx.createBufferSource();
         bufferSource.buffer = buffer;
@@ -92,7 +101,34 @@ function playBeepLoop(buffer, time) {
             pressed while beep is in progress!)
         */
         bufferSource.onended = function() {
-            playBeepLoop(buffer, time + secondsPerBeep, secondsPerBeep);
+            playBeatLoop(buffer, time + secondsPerBeep, secondsPerBeep);
         };
+        if (playSubdivisions) {
+            playSubdivisionLoop(buffer, time);
+        }
+    };
+}
+
+function playSubdivisionLoop(buffer, time) {
+    var division = (duple.checked) ? 2 : 3;
+    var bufferSource = audioCtx.createBufferSource();
+    bufferSource.buffer = buffer;
+    bufferSource.connect(audioCtx.destination);
+    bufferSource.start(time);
+    bufferSource.onended = function() {
+        if (playSubdivisions) {
+            bufferSource = audioCtx.createBufferSource();
+            bufferSource.buffer = buffer;
+            bufferSource.connect(audioCtx.destination);
+            bufferSource.start(time + secondsPerBeep/division);
+            bufferSource.onended = function() {
+                if (division === 3 && playSubdivisions) {
+                    bufferSource = audioCtx.createBufferSource();
+                    bufferSource.buffer = buffer;
+                    bufferSource.connect(audioCtx.destination);
+                    bufferSource.start(time + 2 * secondsPerBeep/division);
+                }
+            }
+        }
     };
 }
