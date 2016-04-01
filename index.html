@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Metronome</title>
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+        <div id="metronome">
+            <audio id="beep">
+                <source src="Beep.mp3" type="audio/mp3">
+            </audio>
+            <h1>Metronome</h1>
+            <input id="bpm" type="number" name="bpm" value="60">
+            <div id="startstop">
+                <button id="start">Start</button>
+                <button id="stop">Stop</button>
+            </div>
+        </div>
+        <script src="js/metronome.js"></script>
+    </body>
+</html>

@@ -1,0 +1,42 @@
+body {
+    font-size: 12pt;
+    margin-top: 8em;
+    font-family: sans-serif;
+}
+
+#metronome {
+    width: 11em;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+input {
+    display: block;
+    width: 90%;
+    margin: 0 auto;
+    font-size: 2em;
+    text-align: right;
+}
+
+#startstop {
+    width: 75%;
+    margin: 0 auto;
+    margin-top: 1.5em;
+}
+
+button {
+    font-size: 1.25em;
+    padding: 0.25em
+}
+
+#start {
+    color: green;
+}
+
+#stop {
+    float: right;
+    color: red;
+}
