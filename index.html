@@ -17,13 +17,13 @@
                 <button id="start">Start</button>
                 <button id="stop">Stop</button>
             </div>
-            <div>
-                <label for="duple">duple</label>
-                <input type="radio" name="division" id="duple" checked>
-                <label for="triple">triple</label>
-                <input type="radio" name="division" id="triple">
+            <div id="subdivisioncontrols">
+                <div id="divisions">
+                    <label><input type="radio" name="division" id="duple" checked>duple</label>
+                    <label><input type="radio" name="division" id="triple">triple</label>
+                </div>
+                <button id="subdivide">subdivide</button>
             </div>
-            <button id="subdivide">subdivide</button>
         </div>
         <script src="js/metronome.js"></script>
     </body>

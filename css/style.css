@@ -13,7 +13,7 @@ h1 {
     text-align: center;
 }
 
-input {
+#bpm {
     display: block;
     width: 90%;
     margin: 0 auto;
@@ -39,4 +39,29 @@ button {
 #stop {
     float: right;
     color: red;
+}
+
+#subdivisioncontrols {
+    width: 85%;
+    margin: 0 auto;
+    margin-top: 1.5em;
+}
+
+#divisions {
+    float: left;
+}
+
+#subdivide {
+    float: right;
+    font-size: 1em;
+}
+
+label {
+    display: block;
+}
+
+#subdivisioncontrols:after {
+    content: "";
+    clear: both;
+    display: block;
 }
