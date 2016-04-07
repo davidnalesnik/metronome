@@ -47,10 +47,14 @@ request.onload = function () {
                 whereInPattern = -1;
                 var currentPatternElement;
                 /**
-                    When a note starts playing, schedule the next one.
+                    When a note starts playing, schedule the next one.  Because
+                    of animation frames, this function will be called 60/second.
+                    TODO: Somehow link this with a visual element.
                 */
                 var beepFunction = function() {
-                    if (audioCtx.currentTime >= lastScheduledNoteTime){
+                    if (audioCtx.currentTime > lastScheduledNoteTime){
+                        // When started, prints *twice* in quick succession!
+                        console.log('beat!\n');
                         /**
                             Reset when we reach the end of the pattern.
                         */
@@ -61,6 +65,10 @@ request.onload = function () {
                             whereInPattern++;
                         }
                         currentPatternElement = pattern[whereInPattern];
+                        // Note: lastScheduledNoteTime doesn't change the first time through,
+                        // leading to 2 quick calls.  This means that we schedule 2 events
+                        // right away.  (Notice the repeated call of the logging line above.)
+                        // This will be an issue when we add visual beeper...
                         lastScheduledNoteTime = lastScheduledPatternTime + currentPatternElement[1] * secondsPerBeat;
                         scheduleSound(currentPatternElement[0], lastScheduledNoteTime);
                     }
@@ -68,7 +76,7 @@ request.onload = function () {
                     beepingInProgress = requestAnimationFrame(beepFunction);
                 };
 
-                beepingInProgress = requestAnimationFrame(beepFunction);
+               beepingInProgress = requestAnimationFrame(beepFunction);
             };
         };
 
@@ -82,8 +90,6 @@ request.onload = function () {
         */
         inputBox.onchange = function() {
             setSecondsPerBeat();
-            //resetPattern();
-            playSubdivisions = false;
         };
         /**
             Subdivide
