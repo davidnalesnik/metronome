@@ -30,38 +30,38 @@ request.onload = function () {
         var division = 2;
         on.onclick = function() {
             setSecondsPerBeat();
-            var lastScheduledPatternTime = audioCtx.currentTime;
-            var lastScheduledNoteTime = audioCtx.currentTime;
-            var patternLength = pattern.length;
-            /**
-                set to -1 so first note heard when beepFunction first called
-                (whereInPattern is initially incremented)
-            */
-            whereInPattern = -1;
-            var currentPatternElement;
-            /**
-                When a note starts playing, schedule the next one.  The variables
-            */
-            var beepFunction = function() {
-                if (audioCtx.currentTime >= lastScheduledNoteTime){
-                    /**
-                        Reset when we reach the end of the pattern.
-                    */
-                    if (whereInPattern === pattern.length - 1) {
-                        whereInPattern = 0;
-                        lastScheduledPatternTime += secondsPerBeat;
-                } else {
-                        whereInPattern++;
-                    }
-                    currentPatternElement = pattern[whereInPattern];
-                    lastScheduledNoteTime = lastScheduledPatternTime + currentPatternElement[1] * secondsPerBeat;
-                    scheduleSound(currentPatternElement[0], lastScheduledNoteTime);
-                }
-                beepingInProgress = setTimeout(beepFunction, 0);
-            };
             if (!beepingInProgress) {
+                var lastScheduledPatternTime = audioCtx.currentTime;
+                var lastScheduledNoteTime = audioCtx.currentTime;
+                /**
+                    Set to -1 so first note heard when beepFunction first called
+                    (whereInPattern is initially incremented).
+                */
+                whereInPattern = -1;
+                var currentPatternElement;
+                /**
+                    When a note starts playing, schedule the next one.
+                */
+                var beepFunction = function() {
+                    if (audioCtx.currentTime >= lastScheduledNoteTime){
+                        /**
+                            Reset when we reach the end of the pattern.
+                        */
+                        if (whereInPattern === pattern.length - 1) {
+                            whereInPattern = 0;
+                            lastScheduledPatternTime += secondsPerBeat;
+                        } else {
+                            whereInPattern++;
+                        }
+                        currentPatternElement = pattern[whereInPattern];
+                        lastScheduledNoteTime = lastScheduledPatternTime + currentPatternElement[1] * secondsPerBeat;
+                        scheduleSound(currentPatternElement[0], lastScheduledNoteTime);
+                    }
+                    beepingInProgress = setTimeout(beepFunction, 0);
+                };
+
                 beepFunction();
-            }
+            };
         };
 
         off.onclick = function() {
@@ -85,7 +85,7 @@ request.onload = function () {
             if (playSubdivisions) {
                 updatePattern();
             } else {
-               resetPattern();
+                resetPattern();
             }
         };
 
