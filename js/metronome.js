@@ -1,3 +1,10 @@
+/**
+    TODO:
+     - use multiple sounds
+     - FIX: can't change subdivision level after tempo change
+     - Use animation frames.
+*/
+
 var on = document.getElementById('start'),
     off = document.getElementById('stop'),
     inputBox = document.querySelector('input'),
@@ -57,6 +64,7 @@ request.onload = function () {
                         lastScheduledNoteTime = lastScheduledPatternTime + currentPatternElement[1] * secondsPerBeat;
                         scheduleSound(currentPatternElement[0], lastScheduledNoteTime);
                     }
+
                     beepingInProgress = setTimeout(beepFunction, 0);
                 };
 
