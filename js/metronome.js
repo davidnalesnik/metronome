@@ -9,6 +9,13 @@ var beepingInProgress = false,
     playSubdivisions = false;
 
 var secondsPerBeat;
+/**
+    an object storing sounds and their location within the pattern.  Location
+    is expressed as a floating-point number between 0.0 and 1.0.  This will
+    be multiplied by the seconds-per-beat to give the offset in seconds.
+    [[buffer1, fraction1], [buffer2, fraction2]]
+*/
+var pattern = [];
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -18,20 +25,37 @@ request.responseType = 'arraybuffer';
 
 request.onload = function () {
     audioCtx.decodeAudioData(request.response, function (buffer) {
+        pattern.push([buffer, 0.0]);
+        var whereInPattern;
+        var division = 2;
         on.onclick = function() {
-            var lastScheduledTime = audioCtx.currentTime;
             setSecondsPerBeat();
+            var lastScheduledPatternTime = audioCtx.currentTime;
+            var lastScheduledNoteTime = audioCtx.currentTime;
+            var patternLength = pattern.length;
+            /**
+                set to -1 so first note heard when beepFunction first called
+                (whereInPattern is initially incremented)
+            */
+            whereInPattern = -1;
+            var currentPatternElement;
+            /**
+                When a note starts playing, schedule the next one.  The variables
+            */
             var beepFunction = function() {
-                if (audioCtx.currentTime > lastScheduledTime){
-                    lastScheduledTime += secondsPerBeat;
-                    scheduleSound(buffer, lastScheduledTime);
-                    var division = (duple.checked) ? 2 : 3;
-                    if (playSubdivisions) {
-                        scheduleOffbeatSound(buffer, lastScheduledTime + secondsPerBeat/division);
+                if (audioCtx.currentTime >= lastScheduledNoteTime){
+                    /**
+                        Reset when we reach the end of the pattern.
+                    */
+                    if (whereInPattern === pattern.length - 1) {
+                        whereInPattern = 0;
+                        lastScheduledPatternTime += secondsPerBeat;
+                } else {
+                        whereInPattern++;
                     }
-                    if (playSubdivisions && division === 3) {
-                        scheduleOffbeatSound(buffer, lastScheduledTime + 2 * secondsPerBeat/division);
-                    }
+                    currentPatternElement = pattern[whereInPattern];
+                    lastScheduledNoteTime = lastScheduledPatternTime + currentPatternElement[1] * secondsPerBeat;
+                    scheduleSound(currentPatternElement[0], lastScheduledNoteTime);
                 }
                 beepingInProgress = setTimeout(beepFunction, 0);
             };
@@ -50,6 +74,7 @@ request.onload = function () {
         */
         inputBox.onchange = function() {
             setSecondsPerBeat();
+            //resetPattern();
             playSubdivisions = false;
         };
         /**
@@ -57,6 +82,37 @@ request.onload = function () {
         */
         subdivide.onclick = function() {
             playSubdivisions = !playSubdivisions;
+            if (playSubdivisions) {
+                updatePattern();
+            } else {
+               resetPattern();
+            }
+        };
+
+        duple.onclick = function() {
+            division = 2;
+            if (playSubdivisions) {
+                updatePattern();
+            }
+        };
+
+        triple.onclick = function() {
+            division = 3;
+            if (playSubdivisions) {
+                updatePattern();
+            }
+        };
+
+        function updatePattern() {
+            resetPattern();
+            for(var i = 1; i < division; i++) {
+                pattern.push([buffer, i * 1/division]);
+            }
+        };
+
+        function resetPattern() {
+            pattern = [[buffer, 0.0]];
+            whereInPattern = 0;
         };
     });
 };
