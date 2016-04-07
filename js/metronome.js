@@ -1,8 +1,8 @@
 /**
     TODO:
      - use multiple sounds
-     - FIX: can't change subdivision level after tempo change
-     - Use animation frames.
+     - FIX: can't change subdivision level after tempo change.
+     - use timestamp parameter of animation frame callback?
 */
 
 var on = document.getElementById('start'),
@@ -65,15 +65,15 @@ request.onload = function () {
                         scheduleSound(currentPatternElement[0], lastScheduledNoteTime);
                     }
 
-                    beepingInProgress = setTimeout(beepFunction, 0);
+                    beepingInProgress = requestAnimationFrame(beepFunction);
                 };
 
-                beepFunction();
+                beepingInProgress = requestAnimationFrame(beepFunction);
             };
         };
 
         off.onclick = function() {
-            clearTimeout(beepingInProgress);
+            cancelAnimationFrame(beepingInProgress);
             beepingInProgress = false;
         };
 
