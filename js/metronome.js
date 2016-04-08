@@ -87,7 +87,12 @@ request.onload = function () {
                         // right away.  (Notice the repeated call of the logging line above.)
                         // This will be an issue when we add visual beeper...
                         newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
-                        scheduleSound(newNoteEntry[0], newNoteTime);
+                        if (whereInPattern === 0) {
+                            scheduleSound(newNoteEntry[0], newNoteTime);
+                        } else {
+                            scheduleOffbeatSound(newNoteEntry[0], newNoteTime);
+                        }
+
                         lastNoteTime = newNoteTime;
                     }
 
