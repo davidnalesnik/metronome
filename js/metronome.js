@@ -34,43 +34,61 @@ request.onload = function () {
     audioCtx.decodeAudioData(request.response, function (buffer) {
         pattern.push([buffer, 0.0]);
         var whereInPattern;
-        var division = 2;
+        var division = 1; // default = no subdivision
+        // flag indicating whether we have changed tempo or changed to
+        // subdivisions or back to beats only
+        var handleRateChange = false;
+
         on.onclick = function() {
             setSecondsPerBeat();
+            // local tempo; needed b/c we only change tempo by the pattern
+            // statement, though the user can request a change at any time
+            var patternSeconds = secondsPerBeat;
             if (!beepingInProgress) {
-                var lastScheduledPatternTime = audioCtx.currentTime;
-                var lastScheduledNoteTime = audioCtx.currentTime;
+                var patternStartTime = audioCtx.currentTime;
+                var lastNoteTime = audioCtx.currentTime;
+                var newNoteTime = lastNoteTime;
                 /**
                     Set to -1 so first note heard when beepFunction first called
                     (whereInPattern is initially incremented).
                 */
                 whereInPattern = -1;
-                var currentPatternElement;
+                var newNoteEntry;
                 /**
                     When a note starts playing, schedule the next one.  Because
                     of animation frames, this function will be called 60/second.
                     TODO: Somehow link this with a visual element.
                 */
                 var beepFunction = function() {
-                    if (audioCtx.currentTime > lastScheduledNoteTime){
+                    if (audioCtx.currentTime > lastNoteTime){
                         // When started, prints *twice* in quick succession!
-                        console.log('beat!\n');
+                        //console.log('beat!\n');
                         /**
-                            Reset when we reach the end of the pattern.
+                            Reset when we reach the end of the pattern.  Changes
+                            of division and tempo changes happen here.
                         */
                         if (whereInPattern === pattern.length - 1) {
                             whereInPattern = 0;
-                            lastScheduledPatternTime += secondsPerBeat;
+                            // patternSeconds is the rate before any change
+                            // first note of new pattern will be scheduled
+                            // according to the old tempo
+                            patternStartTime += patternSeconds;
+                            if (handleRateChange) {
+                                patternSeconds = secondsPerBeat;
+                                updatePattern();
+                                handleRateChange = false;
+                            }
                         } else {
                             whereInPattern++;
                         }
-                        currentPatternElement = pattern[whereInPattern];
-                        // Note: lastScheduledNoteTime doesn't change the first time through,
+                        newNoteEntry = pattern[whereInPattern];
+                        // Note: lastNoteTime doesn't change the first time through,
                         // leading to 2 quick calls.  This means that we schedule 2 events
                         // right away.  (Notice the repeated call of the logging line above.)
                         // This will be an issue when we add visual beeper...
-                        lastScheduledNoteTime = lastScheduledPatternTime + currentPatternElement[1] * secondsPerBeat;
-                        scheduleSound(currentPatternElement[0], lastScheduledNoteTime);
+                        newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
+                        scheduleSound(newNoteEntry[0], newNoteTime);
+                        lastNoteTime = newNoteTime;
                     }
 
                     beepingInProgress = requestAnimationFrame(beepFunction);
@@ -90,43 +108,48 @@ request.onload = function () {
         */
         inputBox.onchange = function() {
             setSecondsPerBeat();
+            handleRateChange = true;
         };
         /**
             Subdivide
         */
         subdivide.onclick = function() {
-            playSubdivisions = !playSubdivisions;
+            playSubdivisions = !playSubdivisions; // toggle
+
             if (playSubdivisions) {
-                updatePattern();
+                division = (duple.checked) ? 2 : 3;
+                subdivide.innerHTML = 'subdivide off';
             } else {
                 resetPattern();
+                division = 1;
+                subdivide.innerHTML = 'subdivide';
             }
+
+            handleRateChange = true;
         };
 
         duple.onclick = function() {
             division = 2;
-            if (playSubdivisions) {
-                updatePattern();
-            }
+            if (playSubdivisions) handleRateChange = true;
         };
 
         triple.onclick = function() {
             division = 3;
-            if (playSubdivisions) {
-                updatePattern();
-            }
+            if (playSubdivisions) handleRateChange = true;
         };
 
         function updatePattern() {
             resetPattern();
-            for(var i = 1; i < division; i++) {
-                pattern.push([buffer, i * 1/division]);
+            if (division > 1) {
+                for(var i = 1; i < division; i++) {
+                    pattern.push([buffer, i * 1/division]);
+                }
             }
         };
 
         function resetPattern() {
             pattern = [[buffer, 0.0]];
-            whereInPattern = 0;
+            whereInPattern = 0; // why needed? set to 0 in beepFunction ...
         };
     });
 };
