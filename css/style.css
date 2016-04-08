@@ -47,13 +47,13 @@ button {
     margin-top: 1.5em;
 }
 
-#divisions {
+#subdivide {
     float: left;
+    font-size: 1em;
 }
 
-#subdivide {
+#divisions {
     float: right;
-    font-size: 1em;
 }
 
 label {
