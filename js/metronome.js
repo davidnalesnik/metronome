@@ -1,7 +1,6 @@
 /**
     TODO:
      - use multiple sounds
-     - FIX: can't change subdivision level after tempo change.
      - use timestamp parameter of animation frame callback?
 */
 
