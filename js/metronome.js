@@ -26,7 +26,12 @@ var pattern = [];
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 var request = new XMLHttpRequest();
-request.open('GET', 'Beep.mp3', true);
+// Beep sound taken from Audiosoundclips.com:
+// http://audiosoundclips.com/wp-content/uploads/2011/12/Beep.mp3
+//request.open('GET', 'Beep.mp3', true);
+// Sound derived from metronome sound by Mike Koenig at
+// http://soundbible.com/914-Metronome.html
+request.open('GET', 'metronome_sound.mp3', true);
 request.responseType = 'arraybuffer';
 
 request.onload = function () {
