@@ -56,10 +56,13 @@ request.onload = function () {
                 var lastNoteTime = -1;
                 var newNoteTime;
                 /**
-                    Set to -1 so first note heard when beepFunction first called
-                    (whereInPattern is initially incremented).
+                    Set to last note of the pattern.  This is done so we
+                    can begin with subdivisions.  beepFunction only allows
+                    changes when we reach the last note of a pattern.  We
+                    will start with the right note b/c whereInPattern is
+                    immediately set to 0.
                 */
-                whereInPattern = -1;
+                whereInPattern = pattern.length - 1;
                 var newNoteEntry;
                 /**
                     When a note starts playing, schedule the next one.  Because
