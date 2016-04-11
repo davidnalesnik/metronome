@@ -31,6 +31,7 @@ request.responseType = 'arraybuffer';
 
 request.onload = function () {
     audioCtx.decodeAudioData(request.response, function (buffer) {
+        // initialize pattern -- a single beat
         pattern.push([buffer, 0.0]);
         var whereInPattern;
         var division = 1; // default = no subdivision
@@ -44,9 +45,16 @@ request.onload = function () {
             // statement, though the user can request a change at any time
             var patternSeconds = secondsPerBeat;
             if (!beepingInProgress) {
-                var patternStartTime = audioCtx.currentTime;
-                var lastNoteTime = audioCtx.currentTime;
-                var newNoteTime = lastNoteTime;
+                /**
+                    The first beep will happen slightly after the start
+                    button is clicked.  We do this so that first beat is
+                    not shortened -- noticeable on mobile devices
+                */
+                var startOffset = 0.4;
+                var patternStartTime = audioCtx.currentTime + startOffset;
+                // set to -1 so beepFunction loop triggers immediately
+                var lastNoteTime = -1;
+                var newNoteTime;
                 /**
                     Set to -1 so first note heard when beepFunction first called
                     (whereInPattern is initially incremented).
@@ -60,8 +68,13 @@ request.onload = function () {
                 */
                 var beepFunction = function() {
                     if (audioCtx.currentTime > lastNoteTime){
-                        // When started, prints *twice* in quick succession!
-                        //console.log('beat!\n');
+                        /**
+                            Prints before first note sounds b/c loop always
+                            schedules future events.  Also, won't print when
+                            count ends.  Syncing with visual element must
+                            take this into account if linked to this function.
+                        */
+                        console.log('beat!\n');
                         /**
                             Reset when we reach the end of the pattern.  Changes
                             of division and tempo changes happen here.
@@ -81,10 +94,6 @@ request.onload = function () {
                             whereInPattern++;
                         }
                         newNoteEntry = pattern[whereInPattern];
-                        // Note: lastNoteTime doesn't change the first time through,
-                        // leading to 2 quick calls.  This means that we schedule 2 events
-                        // right away.  (Notice the repeated call of the logging line above.)
-                        // This will be an issue when we add visual beeper...
                         newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
                         if (whereInPattern === 0) {
                             scheduleSound(newNoteEntry[0], newNoteTime);
