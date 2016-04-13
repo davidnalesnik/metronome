@@ -11,7 +11,7 @@ var on = document.getElementById('start'),
     duple = document.getElementById('duple'),
     triple = document.getElementById('triple');
 
-var beepingInProgress = false,
+var beepFrame = false,
     playSubdivisions = false;
 
 var secondsPerBeat;
@@ -43,17 +43,26 @@ request.onload = function () {
         // flag indicating whether we have changed tempo or changed to
         // subdivisions or back to beats only
         var handleRateChange = false;
+        var endCount = false;
 
         on.onclick = function() {
             setSecondsPerBeat();
             // local tempo; needed b/c we only change tempo by the pattern
             // statement, though the user can request a change at any time
             var patternSeconds = secondsPerBeat;
-            if (!beepingInProgress) {
+            /**
+                We only honor the first click of start button.  While count
+                is in progress, all clicks are ignored.
+            */
+            if (!beepFrame) {
+                /**
+                    A flag for the very beginning of a count.
+                */
+                var countStart = true;
                 /**
                     The first beep will happen slightly after the start
                     button is clicked.  We do this so that first beat is
-                    not shortened -- noticeable on mobile devices
+                    not shortened -- noticeably so on mobile devices.
                 */
                 var startOffset = 0.4;
                 var patternStartTime = audioCtx.currentTime + startOffset;
@@ -61,38 +70,56 @@ request.onload = function () {
                 var lastNoteTime = -1;
                 var newNoteTime;
                 /**
-                    Set to last note of the pattern.  This is done so we
-                    can begin with subdivisions.  beepFunction only allows
+                    Set to last note of the pattern.  Subdivisions are
+                    processed as a change, and beepFunction only allows
                     changes when we reach the last note of a pattern.  We
                     will start with the right note b/c whereInPattern is
-                    immediately set to 0.
+                    set to 0 after changes are processed.
                 */
                 whereInPattern = pattern.length - 1;
                 var newNoteEntry;
+                var visualBeats = document.getElementsByClassName('visualbeat');
+                var beat = 0;
                 /**
-                    When a note starts playing, schedule the next one.  Because
-                    of animation frames, this function will be called 60/second.
-                    TODO: Somehow link this with a visual element.
+                    As soon as possible after a note starts playing, schedule
+                    the next one.
+
+                    Note: if the tempo gets really really fast, condition
+                    will always be true.  Current time will drift from
+                    last note time.  Notes will be scheduled further and
+                    further in the past (meaning that they will sound in
+                    the present).
                 */
                 var beepFunction = function() {
                     if (audioCtx.currentTime > lastNoteTime){
+                        //console.log((audioCtx.currentTime - lastNoteTime) * 1000);
                         /**
                             Prints before first note sounds b/c loop always
                             schedules future events.  Also, won't print when
                             count ends.  Syncing with visual element must
                             take this into account if linked to this function.
                         */
-                        console.log('beat!\n');
+                        //console.log('beat!\n');
                         /**
-                            Reset when we reach the end of the pattern.  Changes
-                            of division and tempo changes happen here.
+                            Advance where we are in pattern.  If we are at the
+                            end, return to first note and process any Changes
+                            of division and tempo.
                         */
                         if (whereInPattern === pattern.length - 1) {
                             whereInPattern = 0;
-                            // patternSeconds is the rate before any change
-                            // first note of new pattern will be scheduled
-                            // according to the old tempo
-                            patternStartTime += patternSeconds;
+                            /**
+                                If a change is requested, the arrival of the
+                                new pattern statement happens according to the
+                                old tempo.  Then the new settings take effect.
+
+                                Don't delay the very first beat by the pattern
+                                length, though.
+                            */
+                            if (!countStart) {
+                                patternStartTime += patternSeconds;
+                            } else {
+                                countStart = false;
+                            }
                             if (handleRateChange) {
                                 patternSeconds = secondsPerBeat;
                                 updatePattern();
@@ -101,6 +128,7 @@ request.onload = function () {
                         } else {
                             whereInPattern++;
                         }
+
                         newNoteEntry = pattern[whereInPattern];
                         newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
                         if (whereInPattern === 0) {
@@ -108,20 +136,44 @@ request.onload = function () {
                         } else {
                             scheduleOffbeatSound(newNoteEntry[0], newNoteTime);
                         }
+                        /**
+                            Very rough visuals.
+                        */
+                        visualBeats[beat].classList.remove('show');
+                        if (beat === visualBeats.length - 1) {
+                            beat = 0;
+                        } else {
+                            beat++;
+                        }
+                        visualBeats[beat].classList.add('show');
 
                         lastNoteTime = newNoteTime;
                     }
-
-                    beepingInProgress = requestAnimationFrame(beepFunction);
+                    /**
+                        Cancelling animation frame here may offer more control.
+                        If we want to show the last scheduled beat, we need
+                        to run the loop once more after clicking off.  We would
+                        update the visuals, but not schedule a note.  (We need
+                        to wrap the audio code in a conditional and move the
+                        visual code.)
+                    */
+                    if (endCount) {
+                        cancelAnimationFrame(beepFrame);
+                        beepFrame = false;
+                        endCount = false;
+                    } else {
+                        beepFrame = requestAnimationFrame(beepFunction);
+                    }
                 };
 
-               beepingInProgress = requestAnimationFrame(beepFunction);
+               beepFrame = requestAnimationFrame(beepFunction);
             };
         };
 
         off.onclick = function() {
-            cancelAnimationFrame(beepingInProgress);
-            beepingInProgress = false;
+            //cancelAnimationFrame(beepFrame);
+            endCount = true;
+            //beepFrame = false;
         };
 
         /**

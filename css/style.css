@@ -65,3 +65,16 @@ label {
     clear: both;
     display: block;
 }
+
+/******************************/
+.visualbeat {
+    height: 1em;
+    width: 1em;
+    background-color: white;
+    display: inline-block;
+    margin: 1em;
+}
+
+.show {
+    background-color: red;
+}
