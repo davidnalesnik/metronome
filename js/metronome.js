@@ -77,20 +77,44 @@ request.onload = function () {
                     set to 0 after changes are processed.
                 */
                 whereInPattern = pattern.length - 1;
+                // Array to store note times for visual synchronization
                 var newNoteEntry;
+                var noteTimeArray = [];
                 var visualBeats = document.getElementsByClassName('visualbeat');
                 var beat = 0;
-                /**
-                    As soon as possible after a note starts playing, schedule
-                    the next one.
 
-                    Note: if the tempo gets really really fast, condition
-                    will always be true.  Current time will drift from
-                    last note time.  Notes will be scheduled further and
-                    further in the past (meaning that they will sound in
-                    the present).
-                */
                 var beepFunction = function() {
+                    /**
+                        Very rough visuals.
+                    */
+                    if (noteTimeArray.length && audioCtx.currentTime > noteTimeArray[0]) {
+                        //visualBeats[beat].classList.add('show');
+                        visualBeats[beat].style.backgroundColor = 'red';
+                        if (beat === 0) {
+                            //visualBeats[visualBeats.length - 1].classList.remove('show');
+                            visualBeats[visualBeats.length - 1].style.backgroundColor = 'white';
+                        } else {
+                            //visualBeats[beat - 1].classList.remove('show');
+                            visualBeats[beat - 1].style.backgroundColor = 'white';
+                        }
+
+                        if (beat === visualBeats.length - 1) {
+                            beat = 0;
+                        } else {
+                            beat++;
+                        }
+                        noteTimeArray.shift();
+                    }
+                    /**
+                        As soon as possible after a note starts playing, schedule
+                        the next one.
+
+                        Note: if the tempo gets really really fast, condition
+                        will always be true.  Current time will drift from
+                        last note time.  Notes will be scheduled further and
+                        further in the past (meaning that they will sound in
+                        the present).
+                    */
                     if (audioCtx.currentTime > lastNoteTime){
                         //console.log((audioCtx.currentTime - lastNoteTime) * 1000);
                         /**
@@ -117,8 +141,6 @@ request.onload = function () {
                             */
                             if (!countStart) {
                                 patternStartTime += patternSeconds;
-                            } else {
-                                countStart = false;
                             }
                             if (handleRateChange) {
                                 patternSeconds = secondsPerBeat;
@@ -136,18 +158,16 @@ request.onload = function () {
                         } else {
                             scheduleOffbeatSound(newNoteEntry[0], newNoteTime);
                         }
-                        /**
-                            Very rough visuals.
-                        */
-                        visualBeats[beat].classList.remove('show');
-                        if (beat === visualBeats.length - 1) {
-                            beat = 0;
-                        } else {
-                            beat++;
+
+                        if (countStart) {
+                            countStart = false;
                         }
-                        visualBeats[beat].classList.add('show');
 
                         lastNoteTime = newNoteTime;
+                        // Subdivision disabled in visuals...
+                        if (whereInPattern === 0) {
+                            noteTimeArray.push(lastNoteTime);
+                        }
                     }
                     /**
                         Cancelling animation frame here may offer more control.

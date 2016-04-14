@@ -70,7 +70,7 @@ label {
 .visualbeat {
     height: 1em;
     width: 1em;
-    background-color: white;
+    /*background-color: white;*/
     display: inline-block;
     margin: 1em;
 }
