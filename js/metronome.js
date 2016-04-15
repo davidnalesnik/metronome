@@ -2,6 +2,7 @@
     TODO:
      - use multiple sounds
      - use timestamp parameter of animation frame callback?
+     - move a lot of code out of on.click handler
 */
 
 var on = document.getElementById('start'),
