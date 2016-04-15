@@ -36,10 +36,11 @@ request.responseType = 'arraybuffer';
 
 request.onload = function () {
     audioCtx.decodeAudioData(request.response, function (buffer) {
-        // initialize pattern -- a single beat
+        // initialize pattern with a single beat
         pattern.push([buffer, 0.0]);
         var whereInPattern;
-        var division = 1; // default = no subdivision
+        // default = no subdivision
+        var division = 1;
         // flag indicating whether we have changed tempo or changed to
         // subdivisions or back to beats only
         var handleRateChange = false;
@@ -47,38 +48,13 @@ request.onload = function () {
 
         on.onclick = function() {
             setSecondsPerBeat();
-            // local tempo; needed b/c we only change tempo by the pattern
-            // statement, though the user can request a change at any time
-            var patternSeconds = secondsPerBeat;
+
             /**
                 We only honor the first click of start button.  While count
                 is in progress, all clicks are ignored.
             */
             if (!beepFrame) {
-                /**
-                    A flag for the very beginning of a count.
-                */
-                var countStart = true;
-                /**
-                    The first beep will happen slightly after the start
-                    button is clicked.  We do this so that first beat is
-                    not shortened -- noticeably so on mobile devices.
-                */
-                var startOffset = 0.4;
-                var patternStartTime = audioCtx.currentTime + startOffset;
-                // set to -1 so beepFunction loop triggers immediately
-                var lastNoteTime = -1;
-                var newNoteTime;
-                /**
-                    Set to last note of the pattern.  Subdivisions are
-                    processed as a change, and beepFunction only allows
-                    changes when we reach the last note of a pattern.  We
-                    will start with the right note b/c whereInPattern is
-                    set to 0 after changes are processed.
-                */
-                whereInPattern = pattern.length - 1;
                 // Array to store note times for visual synchronization
-                var newNoteEntry;
                 var noteTimeArray = [];
                 var visualBeats = document.getElementsByClassName('visualbeat');
                 var beat = 0;
@@ -107,6 +83,33 @@ request.onload = function () {
                     }
                 };
 
+                var newNoteEntry;
+                // local tempo; needed b/c we only change tempo by the pattern
+                // statement, though the user can request a change at any time
+                var patternSeconds = secondsPerBeat;
+                /**
+                    A flag for the very beginning of a count.
+                */
+                var countStart = true;
+                /**
+                    The first beep will happen slightly after the start
+                    button is clicked.  We do this so that first beat is
+                    not shortened -- noticeably so on mobile devices.
+                */
+                var startOffset = 0.4;
+                var patternStartTime = audioCtx.currentTime + startOffset;
+                // set to -1 so beepFunction loop triggers immediately
+                var lastNoteTime = -1;
+                var newNoteTime;
+                /**
+                    Set to last note of the pattern.  Subdivisions are
+                    processed as a change, and beepFunction only allows
+                    changes when we reach the last note of a pattern.  We
+                    will start with the right note b/c whereInPattern is
+                    set to 0 after changes are processed.
+                */
+                whereInPattern = pattern.length - 1;
+
                 var beepFunction = function() {
                     updateScreen();
                     /**
@@ -121,13 +124,6 @@ request.onload = function () {
                     */
                     if (audioCtx.currentTime > lastNoteTime){
                         //console.log((audioCtx.currentTime - lastNoteTime) * 1000);
-                        /**
-                            Prints before first note sounds b/c loop always
-                            schedules future events.  Also, won't print when
-                            count ends.  Syncing with visual element must
-                            take this into account if linked to this function.
-                        */
-                        //console.log('beat!\n');
                         /**
                             Advance where we are in pattern.  If we are at the
                             end, return to first note and process any Changes
@@ -173,20 +169,21 @@ request.onload = function () {
                             noteTimeArray.push(lastNoteTime);
                         }
                     }
-                    /**
-                        Cancelling animation frame here may offer more control.
-                        If we want to show the last scheduled beat, we need
-                        to run the loop once more after clicking off.  We would
-                        update the visuals, but not schedule a note.  (We need
-                        to wrap the audio code in a conditional and move the
-                        visual code.)
-                    */
+
                     if (endCount) {
                         /**
-                            Ugh.  We need to wait until it's time for last
-                            display change before calling updateScreen.
+                            Visuals are out of sync with audio scheduling, since
+                            screen updates are done "in the present," and sounds
+                            are prepared for the future.  After scheduling the
+                            last *tock*, we must continue to watch the time so
+                            we can call a screen update when the last sound
+                            arrives.
+
+                            Perhaps this could be more elegantly done than by
+                            a dead loop.
                         */
                         while (audioCtx.currentTime < lastNoteTime) {
+                            // biding our time...
                         };
                         updateScreen();
                         cancelAnimationFrame(beepFrame);
@@ -202,9 +199,7 @@ request.onload = function () {
         };
 
         off.onclick = function() {
-            //cancelAnimationFrame(beepFrame);
             endCount = true;
-            //beepFrame = false;
         };
 
         /**
