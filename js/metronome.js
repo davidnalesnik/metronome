@@ -12,7 +12,18 @@ var on = document.getElementById('start'),
     inputBox = document.querySelector('input'),
     subdivide = document.getElementById('subdivide'),
     duple = document.getElementById('duple'),
-    triple = document.getElementById('triple');
+    triple = document.getElementById('triple'),
+    lights = document.getElementById('lights');
+
+/**
+    Create DOM elements for beat display.
+*/
+for (var i = 0; i < 2; i++) {
+    var light = document.createElement('div');
+    light.setAttribute('class', 'visualbeat');
+    light.setAttribute('id', 'beat' + i);
+    lights.appendChild(light);
+}
 
 var beepFrame = false,
     playSubdivisions = false;
@@ -51,7 +62,7 @@ request.onload = function () {
         var visualBeats = document.getElementsByClassName('visualbeat');
         var beat;
 
-        var updateScreen = function() {
+        var updateDisplay = function() {
             if (noteTimeArray.length && audioCtx.currentTime > noteTimeArray[0]) {
                 //visualBeats[beat].classList.add('show');
                 visualBeats[beat].style.backgroundColor = 'red';
@@ -118,7 +129,7 @@ request.onload = function () {
         var handleRateChange = false;
 
         var beepFunction = function() {
-            updateScreen();
+            updateDisplay();
             /**
                 As soon as possible after a note starts playing, schedule
                 the next one.
@@ -192,7 +203,7 @@ request.onload = function () {
                 while (audioCtx.currentTime < lastNoteTime) {
                     // biding our time...
                 }
-                updateScreen();
+                updateDisplay();
                 cancelAnimationFrame(beepFrame);
                 beepFrame = false;
                 endCount = false;

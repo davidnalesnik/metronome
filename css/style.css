@@ -73,6 +73,8 @@ label {
     /*background-color: white;*/
     display: inline-block;
     margin: 1em;
+    border: 2px solid;
+    border-radius: 50%;
 }
 
 .show {
