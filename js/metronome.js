@@ -185,7 +185,7 @@ request.onload = function () {
                         */
                         while (audioCtx.currentTime < lastNoteTime) {
                             // biding our time...
-                        };
+                        }
                         updateScreen();
                         cancelAnimationFrame(beepFrame);
                         beepFrame = false;
@@ -196,7 +196,7 @@ request.onload = function () {
                 };
 
                beepFrame = requestAnimationFrame(beepFunction);
-            };
+            }
         };
 
         off.onclick = function() {
@@ -245,12 +245,12 @@ request.onload = function () {
                     pattern.push([buffer, i * 1/division]);
                 }
             }
-        };
+        }
 
         function resetPattern() {
             pattern = [[buffer, 0.0]];
             whereInPattern = 0; // why needed? set to 0 in beepFunction ...
-        };
+        }
     });
 };
 
