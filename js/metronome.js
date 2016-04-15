@@ -83,7 +83,7 @@ request.onload = function () {
                 var visualBeats = document.getElementsByClassName('visualbeat');
                 var beat = 0;
 
-                var beepFunction = function() {
+                var updateScreen = function() {
                     /**
                         Very rough visuals.
                     */
@@ -105,6 +105,10 @@ request.onload = function () {
                         }
                         noteTimeArray.shift();
                     }
+                };
+
+                var beepFunction = function() {
+                    updateScreen();
                     /**
                         As soon as possible after a note starts playing, schedule
                         the next one.
@@ -178,6 +182,13 @@ request.onload = function () {
                         visual code.)
                     */
                     if (endCount) {
+                        /**
+                            Ugh.  We need to wait until it's time for last
+                            display change before calling updateScreen.
+                        */
+                        while (audioCtx.currentTime < lastNoteTime) {
+                        };
+                        updateScreen();
                         cancelAnimationFrame(beepFrame);
                         beepFrame = false;
                         endCount = false;
