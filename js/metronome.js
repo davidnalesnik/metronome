@@ -2,9 +2,6 @@
     TODO:
      - use multiple sounds
      - use timestamp parameter of animation frame callback?
-     - FIX: when 'Stop' is clicked multiple times, restarting
-       count stops after one beat.  Pressing 'Start' then
-       works.  Pressing 'Stop" again leads to the same problem.
 */
 
 var on = document.getElementById('start'),
@@ -220,6 +217,7 @@ request.onload = function () {
             */
             if (!beepFrame) {
                 countStart = true;
+                endCount = false;
                 noteTimeArray = [];
                 beat = 0;
                 patternSeconds = secondsPerBeat;
