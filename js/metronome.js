@@ -15,7 +15,7 @@ var on = document.getElementById('start'),
 /**
     Create DOM elements for beat display.
 */
-for (var i = 0; i < 2; i++) {
+for (var i = 0; i < 4; i++) {
     var light = document.createElement('div');
     light.setAttribute('class', 'visualbeat');
     light.setAttribute('id', 'beat' + i);
@@ -29,8 +29,9 @@ var secondsPerBeat;
 /**
     an object storing sounds and their location within the pattern.  Location
     is expressed as a floating-point number between 0.0 and 1.0.  This will
-    be multiplied by the seconds-per-beat to give the offset in seconds.
-    [[buffer1, fraction1], [buffer2, fraction2]]
+    be multiplied by secondsPerBeat to give the offset in seconds.
+
+    Syntax: [[buffer1, fraction1], [buffer2, fraction2]]
 */
 var pattern = [];
 
@@ -61,8 +62,11 @@ request.onload = function () {
 
         var updateDisplay = function() {
             if (noteTimeArray.length && audioCtx.currentTime > noteTimeArray[0]) {
+                // Show new beat.
                 //visualBeats[beat].classList.add('show');
                 visualBeats[beat].style.backgroundColor = 'red';
+
+                // Hide previous beat.
                 if (beat === 0) {
                     //visualBeats[visualBeats.length - 1].classList.remove('show');
                     visualBeats[visualBeats.length - 1].style.backgroundColor = 'white';
@@ -71,12 +75,28 @@ request.onload = function () {
                     visualBeats[beat - 1].style.backgroundColor = 'white';
                 }
 
-                if (beat === visualBeats.length - 1) {
-                    beat = 0;
+                // Clear the last element when the count has stopped.
+                if (endCount) {
+                    /**
+                        Keep a record of beat to clear.  This is done because
+                        otherwise, If the start of a new count happens before
+                        the callback is executed, the wrong element will be
+                        cleared.  (The variable beat has changed in the
+                        meantime.)
+                    */
+                    var finalBeat = beat;
+                    var timeoutID = setTimeout(function() {
+                        visualBeats[finalBeat].style.backgroundColor = 'white';
+                    }, secondsPerBeat * 1000);
                 } else {
-                    beat++;
+                    // Get ready for next event.
+                    if (beat === visualBeats.length - 1) {
+                        beat = 0;
+                    } else {
+                        beat++;
+                    }
+                    noteTimeArray.shift();
                 }
-                noteTimeArray.shift();
             }
         };
 
