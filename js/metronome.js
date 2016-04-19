@@ -59,12 +59,15 @@ request.onload = function () {
             Very rough visuals.
         */
         // Array to store note times for visual synchronization
-        var noteTimeArray;
+        //var noteTimeArray;
         var visualBeats = document.getElementsByClassName('visualbeat');
         var beat;
 
         var updateDisplay = function() {
             // Show new beat.
+            // Hmm.  If endSignalled and we are on a subdivision other than last,
+            // we don't want to show anything.  Instead we want to hold and
+            // erase the current beat.
             visualBeats[beat].style.backgroundColor = 'red';
 
             // Hide previous beat.
@@ -75,7 +78,7 @@ request.onload = function () {
             }
 
             // Clear the last element when the count has stopped.
-            if (endCount) {
+            if (endSignalled) {
                 /**
                     Keep a record of beat to clear.  This is done because
                     otherwise, If the start of a new count happens before
@@ -87,15 +90,9 @@ request.onload = function () {
                 var timeoutID = setTimeout(function() {
                     visualBeats[finalBeat].style.backgroundColor = 'white';
                 }, secondsPerBeat * 1000);
-            } else {
-                // Get ready for next event.
-                if (beat === visualBeats.length - 1) {
-                    beat = 0;
-                } else {
-                    beat++;
-                }
             }
-            noteTimeArray.shift();
+
+           // if (noteTimeArray.length) noteTimeArray.shift();
         };
 
         var whereInPattern;
@@ -119,8 +116,8 @@ request.onload = function () {
         /**
             Flags representing initiation and termination of a count.
         */
-        var countStart,
-            endCount;
+        var countJustBegun,
+            endSignalled;
         /**
             How much the first beep will happen after the start
             button is clicked.  We do this partly so that first beat is
@@ -143,6 +140,16 @@ request.onload = function () {
         */
         var handleRateChange = false;
 
+        /**
+            This function handles audio scheduling and updates the display
+            when it is time to change beats.
+
+            Note: Visuals are out of sync with audio scheduling, since
+            screen updates are done "in the present," and sounds
+            are prepared for the future.  After scheduling the
+            last *tock*, we continue to watch the time in order
+            to call a screen update when the last sound arrives.
+        */
         var beepFunction = function() {
             /**
                 As soon as possible after a note starts playing, schedule
@@ -155,19 +162,36 @@ request.onload = function () {
                 the present).
             */
             if (audioCtx.currentTime >= lastNoteTime){
-                 /**
-                    Visuals are out of sync with audio scheduling, since
-                    screen updates are done "in the present," and sounds
-                    are prepared for the future.  After scheduling the
-                    last *tock*, we continue to watch the time in order
-                    to call a screen update when the last sound arrives.
-                */
-                if (!countStart && noteTimeArray.length) updateDisplay();
+                /**
+                    If we have just begun a count, we don't want to call
+                    display because the beginning cycle schedules a future
+                    audio event.
 
-                if (endCount) {
+                    Checking whether whereInPattern is 0 limits display to
+                    beats rather than every subdivision.
+
+                    If count end is requested, we need to clear the currently
+                    lit element.
+                */
+                if ((!countJustBegun && whereInPattern === 0) || endSignalled) {
+                    updateDisplay();
+                }
+
+                /**
+                    Advance "beat" for display.
+                */
+                if (!endSignalled && whereInPattern == pattern.length - 1) {
+                    if (beat === visualBeats.length - 1) {
+                        beat = 0;
+                    } else {
+                        beat++;
+                    }
+                }
+
+                if (endSignalled) {
                     cancelAnimationFrame(beepFrame);
                     beepFrame = false;
-                    endCount = false;
+                    endSignalled = false;
                     return;
                 } else {
                     /**
@@ -185,7 +209,7 @@ request.onload = function () {
                             Don't delay the very first beat by the pattern
                             length, though.
                         */
-                        if (!countStart) {
+                        if (!countJustBegun) {
                             patternStartTime += patternSeconds;
                         }
                         if (handleRateChange) {
@@ -205,16 +229,16 @@ request.onload = function () {
                         scheduleOffbeatSound(newNoteEntry[0], newNoteTime);
                     }
 
-                    if (countStart) {
-                        countStart = false;
+                    if (countJustBegun) {
+                        countJustBegun = false;
                     }
 
                     lastNoteTime = newNoteTime;
 
                     // Subdivision disabled in visuals; only downbeats added to array
-                    if (whereInPattern === 0) {
-                        noteTimeArray.push(lastNoteTime);
-                    }
+                    //if (whereInPattern === 0) {
+                     //   noteTimeArray.push(lastNoteTime);
+                //}
                 }
             }
 
@@ -228,10 +252,10 @@ request.onload = function () {
                 is in progress, all clicks are ignored.
             */
             if (!beepFrame) {
-                countStart = true;
-                endCount = false;
-                noteTimeArray = [];
-                beat = 0;
+                countJustBegun = true;
+                endSignalled = false;
+                //noteTimeArray = [];
+                beat = -1;
                 patternSeconds = secondsPerBeat;
                 patternStartTime = audioCtx.currentTime + startOffset;
                 // set to -1 so beepFunction loop triggers immediately
@@ -249,7 +273,7 @@ request.onload = function () {
         };
 
         off.onclick = function() {
-            endCount = true;
+            endSignalled = true;
         };
 
         /**
