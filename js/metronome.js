@@ -2,6 +2,9 @@
     TODO:
      - use multiple sounds
      - use timestamp parameter of animation frame callback?
+     - Improve end of count visuals, if possible.  Right now, we use a dead
+     loop to delay display of last beat, and then we use a setInterval
+     callback to handle disappearing that last beat.
 */
 
 var on = document.getElementById('start'),
@@ -61,43 +64,38 @@ request.onload = function () {
         var beat;
 
         var updateDisplay = function() {
-            if (noteTimeArray.length && audioCtx.currentTime > noteTimeArray[0]) {
-                // Show new beat.
-                //visualBeats[beat].classList.add('show');
-                visualBeats[beat].style.backgroundColor = 'red';
+            // Show new beat.
+            visualBeats[beat].style.backgroundColor = 'red';
 
-                // Hide previous beat.
-                if (beat === 0) {
-                    //visualBeats[visualBeats.length - 1].classList.remove('show');
-                    visualBeats[visualBeats.length - 1].style.backgroundColor = 'white';
-                } else {
-                    //visualBeats[beat - 1].classList.remove('show');
-                    visualBeats[beat - 1].style.backgroundColor = 'white';
-                }
+            // Hide previous beat.
+            if (beat === 0) {
+                visualBeats[visualBeats.length - 1].style.backgroundColor = 'white';
+            } else {
+                visualBeats[beat - 1].style.backgroundColor = 'white';
+            }
 
-                // Clear the last element when the count has stopped.
-                if (endCount) {
-                    /**
-                        Keep a record of beat to clear.  This is done because
-                        otherwise, If the start of a new count happens before
-                        the callback is executed, the wrong element will be
-                        cleared.  (The variable beat has changed in the
-                        meantime.)
-                    */
-                    var finalBeat = beat;
-                    var timeoutID = setTimeout(function() {
-                        visualBeats[finalBeat].style.backgroundColor = 'white';
-                    }, secondsPerBeat * 1000);
+            // Clear the last element when the count has stopped.
+            if (endCount) {
+                /**
+                    Keep a record of beat to clear.  This is done because
+                    otherwise, If the start of a new count happens before
+                    the callback is executed, the wrong element will be
+                    cleared.  (The variable beat has changed in the
+                    meantime.)
+                */
+                var finalBeat = beat;
+                var timeoutID = setTimeout(function() {
+                    visualBeats[finalBeat].style.backgroundColor = 'white';
+                }, secondsPerBeat * 1000);
+            } else {
+                // Get ready for next event.
+                if (beat === visualBeats.length - 1) {
+                    beat = 0;
                 } else {
-                    // Get ready for next event.
-                    if (beat === visualBeats.length - 1) {
-                        beat = 0;
-                    } else {
-                        beat++;
-                    }
-                    noteTimeArray.shift();
+                    beat++;
                 }
             }
+            noteTimeArray.shift();
         };
 
         var whereInPattern;
@@ -146,87 +144,81 @@ request.onload = function () {
         var handleRateChange = false;
 
         var beepFunction = function() {
-            updateDisplay();
             /**
                 As soon as possible after a note starts playing, schedule
                 the next one.
 
                 Note: if the tempo gets really really fast, condition
-                will always be true.  Current time will drift from
+                below will always be true.  Current time will drift from
                 last note time.  Notes will be scheduled further and
                 further in the past (meaning that they will sound in
                 the present).
             */
-            if (audioCtx.currentTime > lastNoteTime){
-                //console.log((audioCtx.currentTime - lastNoteTime) * 1000);
-                /**
-                    Advance where we are in pattern.  If we are at the
-                    end, return to first note and process any Changes
-                    of division and tempo.
-                */
-                if (whereInPattern === pattern.length - 1) {
-                    whereInPattern = 0;
-                    /**
-                        If a change is requested, the arrival of the
-                        new pattern statement happens according to the
-                        old tempo.  Then the new settings take effect.
-
-                        Don't delay the very first beat by the pattern
-                        length, though.
-                    */
-                    if (!countStart) {
-                        patternStartTime += patternSeconds;
-                    }
-                    if (handleRateChange) {
-                        patternSeconds = secondsPerBeat;
-                        updatePattern();
-                        handleRateChange = false;
-                    }
-                } else {
-                    whereInPattern++;
-                }
-
-                newNoteEntry = pattern[whereInPattern];
-                newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
-                if (whereInPattern === 0) {
-                    scheduleSound(newNoteEntry[0], newNoteTime);
-                } else {
-                    scheduleOffbeatSound(newNoteEntry[0], newNoteTime);
-                }
-
-                if (countStart) {
-                    countStart = false;
-                }
-
-                lastNoteTime = newNoteTime;
-                // Subdivision disabled in visuals...
-                if (whereInPattern === 0) {
-                    noteTimeArray.push(lastNoteTime);
-                }
-            }
-
-            if (endCount) {
-                /**
+            if (audioCtx.currentTime >= lastNoteTime){
+                 /**
                     Visuals are out of sync with audio scheduling, since
                     screen updates are done "in the present," and sounds
                     are prepared for the future.  After scheduling the
-                    last *tock*, we must continue to watch the time so
-                    we can call a screen update when the last sound
-                    arrives.
-
-                    Perhaps this could be more elegantly done than by
-                    a dead loop.
+                    last *tock*, we continue to watch the time in order
+                    to call a screen update when the last sound arrives.
                 */
-                while (audioCtx.currentTime < lastNoteTime) {
-                    // biding our time...
+                if (!countStart && noteTimeArray.length) updateDisplay();
+
+                if (endCount) {
+                    cancelAnimationFrame(beepFrame);
+                    beepFrame = false;
+                    endCount = false;
+                    return;
+                } else {
+                    /**
+                        Advance where we are in pattern.  If we are at the
+                        end, return to first note and process any Changes
+                        of division and tempo.
+                    */
+                    if (whereInPattern === pattern.length - 1) {
+                        whereInPattern = 0;
+                        /**
+                            If a change is requested, the arrival of the
+                            new pattern statement happens according to the
+                            old tempo.  Then the new settings take effect.
+
+                            Don't delay the very first beat by the pattern
+                            length, though.
+                        */
+                        if (!countStart) {
+                            patternStartTime += patternSeconds;
+                        }
+                        if (handleRateChange) {
+                            patternSeconds = secondsPerBeat;
+                            updatePattern();
+                            handleRateChange = false;
+                        }
+                    } else {
+                        whereInPattern++;
+                    }
+
+                    newNoteEntry = pattern[whereInPattern];
+                    newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
+                    if (whereInPattern === 0) {
+                        scheduleSound(newNoteEntry[0], newNoteTime);
+                    } else {
+                        scheduleOffbeatSound(newNoteEntry[0], newNoteTime);
+                    }
+
+                    if (countStart) {
+                        countStart = false;
+                    }
+
+                    lastNoteTime = newNoteTime;
+
+                    // Subdivision disabled in visuals; only downbeats added to array
+                    if (whereInPattern === 0) {
+                        noteTimeArray.push(lastNoteTime);
+                    }
                 }
-                updateDisplay();
-                cancelAnimationFrame(beepFrame);
-                beepFrame = false;
-                endCount = false;
-            } else {
-                beepFrame = requestAnimationFrame(beepFunction);
             }
+
+            beepFrame = requestAnimationFrame(beepFunction);
         };
 
         on.onclick = function() {
