@@ -1,12 +1,12 @@
 body {
     font-size: 14pt;
-    margin-top: 8em;
     font-family: sans-serif;
 }
 
 #metronome {
     width: 11em;
     margin: 0 auto;
+    margin-top: 8em;
 }
 
 h1 {
@@ -30,7 +30,11 @@ h1 {
 button {
     font-size: 1.4em;
     padding: 0.25em
-    }
+}
+
+#mute {
+    float: right;
+}
 
 #start {
     color: green;

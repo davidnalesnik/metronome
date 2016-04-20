@@ -13,7 +13,8 @@ var on = document.getElementById('start'),
     subdivide = document.getElementById('subdivide'),
     duple = document.getElementById('duple'),
     triple = document.getElementById('triple'),
-    lights = document.getElementById('lights');
+    lights = document.getElementById('lights'),
+    mute = document.getElementById('mute');
 
 /**
     Create DOM elements for beat display.
@@ -37,6 +38,8 @@ var secondsPerBeat;
     Syntax: [[buffer1, fraction1], [buffer2, fraction2]]
 */
 var pattern = [];
+
+var muted = false;
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -310,6 +313,28 @@ request.onload = function () {
             division = 3;
             if (playSubdivisions) handleRateChange = true;
         };
+
+        /**
+            SOUND
+
+            Pressing mute/unmute button or spacebar toggles sound.
+        */
+        function toggleSound() {
+            muted = !muted;
+            mute.innerHTML = (muted) ? 'unmute' : 'mute';
+            // So spacebar can be used right after mouseclick
+            mute.blur();
+        }
+
+        mute.onclick = function() {
+            toggleSound();
+        };
+
+        document.body.onkeyup = function(ev){
+            if(ev.keyCode == 32) {
+                toggleSound();
+            }
+        };
     });
 };
 
@@ -318,7 +343,10 @@ request.send();
 function scheduleSound(buffer, time) {
     var bufferSource = audioCtx.createBufferSource();
     bufferSource.buffer = buffer;
-    bufferSource.connect(audioCtx.destination);
+    var gainNode = audioCtx.createGain();
+    gainNode.gain.value = (muted) ? 0.0 : 1.0;
+    bufferSource.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
     bufferSource.start(time);
 }
 
@@ -326,7 +354,7 @@ function scheduleOffbeatSound(buffer, time) {
     var bufferSource = audioCtx.createBufferSource();
     bufferSource.buffer = buffer;
     var gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0.2;
+    gainNode.gain.value = (muted) ? 0.0 : 0.2;
     bufferSource.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     bufferSource.start(time);
