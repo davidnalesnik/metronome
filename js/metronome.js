@@ -31,6 +31,7 @@ var on = document.getElementById('start'),
     duple = document.getElementById('duple'),
     triple = document.getElementById('triple'),
     lights = document.getElementById('lights'),
+    bpm = document.getElementById('bpm');
     mute = document.getElementById('mute');
 
 /**
@@ -72,6 +73,19 @@ function setMuteButtonText() {
     mute.innerHTML = (muted) ? 'unmute' : 'mute';
 }
 setMuteButtonText();
+
+var DEFAULT_MM = 60;
+
+if (!haveLocalStorage) {
+    bpm.setAttribute('value', DEFAULT_MM);
+} else {
+    if (!localStorage.getItem('bpm')) {
+        bpm.setAttribute('value', DEFAULT_MM);
+        localStorage.setItem('bpm', JSON.stringify(DEFAULT_MM));
+    } else {
+        bpm.setAttribute('value', JSON.parse(localStorage.getItem('bpm')));
+    }
+}
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -397,6 +411,9 @@ function scheduleOffbeatSound(buffer, time) {
 }
 
 function setSecondsPerBeat() {
-    var beatsPerMinute = document.getElementById('bpm').value;
-    secondsPerBeat = 60/beatsPerMinute;
+    var val = bpm.value;
+    secondsPerBeat = 60/val;
+    if (haveLocalStorage) {
+        localStorage.setItem('bpm', JSON.stringify(val));
+    }
 }
