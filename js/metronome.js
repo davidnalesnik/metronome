@@ -1,11 +1,28 @@
 /**
     TODO:
      - use multiple sounds
-     - use timestamp parameter of animation frame callback?
-     - Improve end of count visuals, if possible.  Right now, we use a dead
-     loop to delay display of last beat, and then we use a setInterval
-     callback to handle disappearing that last beat.
+     - add settings menu
+     - allow visuals to be turned off
+     - number of beat boxes variable
+     - metric accentuation
+     - remember settings between sessions
 */
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+function storageAvailable(type) {
+	try {
+		var storage = window[type],
+			x = '__storage_test__';
+		storage.setItem(x, x);
+		storage.removeItem(x);
+		return true;
+	}
+	catch(e) {
+		return false;
+	}
+}
+
+var haveLocalStorage = (storageAvailable('localStorage')) ? true : false;
 
 var on = document.getElementById('start'),
     off = document.getElementById('stop'),
@@ -39,7 +56,22 @@ var secondsPerBeat;
 */
 var pattern = [];
 
-var muted = false;
+var muted;
+if (!haveLocalStorage) {
+    muted = false;
+} else {
+    if (!localStorage.getItem('muted')) {
+        localStorage.setItem('muted', 'false');
+        muted = false;
+    } else {
+        muted = JSON.parse(localStorage.getItem('muted'));
+    }
+}
+
+function setMuteButtonText() {
+    mute.innerHTML = (muted) ? 'unmute' : 'mute';
+}
+setMuteButtonText();
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -321,12 +353,16 @@ request.onload = function () {
         */
         function toggleSound() {
             muted = !muted;
-            mute.innerHTML = (muted) ? 'unmute' : 'mute';
+            if (haveLocalStorage) {
+                localStorage.setItem('muted', JSON.stringify(muted));
+            }
+            setMuteButtonText();
             // So spacebar can be used right after mouseclick
             mute.blur();
         }
 
         mute.onclick = function() {
+            console.log();
             toggleSound();
         };
 
