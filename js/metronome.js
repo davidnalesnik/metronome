@@ -279,9 +279,9 @@ request.onload = function () {
                     newNoteEntry = pattern[whereInPattern];
                     newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
                     if (whereInPattern === 0) {
-                        scheduleSound(newNoteEntry[0], newNoteTime);
+                        scheduleSound(newNoteEntry[0], newNoteTime, 1.0);
                     } else {
-                        scheduleOffbeatSound(newNoteEntry[0], newNoteTime);
+                        scheduleSound(newNoteEntry[0], newNoteTime, 0.2);
                     }
 
                     if (countJustBegun) {
@@ -396,21 +396,11 @@ request.onload = function () {
 
 request.send();
 
-function scheduleSound(buffer, time) {
+function scheduleSound(buffer, time, gain) {
     var bufferSource = audioCtx.createBufferSource();
     bufferSource.buffer = buffer;
     var gainNode = audioCtx.createGain();
-    gainNode.gain.value = (muted) ? 0.0 : 1.0;
-    bufferSource.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    bufferSource.start(time);
-}
-
-function scheduleOffbeatSound(buffer, time) {
-    var bufferSource = audioCtx.createBufferSource();
-    bufferSource.buffer = buffer;
-    var gainNode = audioCtx.createGain();
-    gainNode.gain.value = (muted) ? 0.0 : 0.2;
+    gainNode.gain.value = (muted) ? 0.0 : gain;
     bufferSource.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     bufferSource.start(time);
