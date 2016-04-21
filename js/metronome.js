@@ -8,6 +8,12 @@
      - remember settings between sessions
 */
 
+try {
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+} catch (e) {
+    alert('Web Audio API support required.');
+}
+
 // https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
 function storageAvailable(type) {
 	try {
@@ -88,8 +94,6 @@ if (!haveLocalStorage) {
         bpm.setAttribute('value', JSON.parse(localStorage.getItem('bpm')));
     }
 }
-
-var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 var request = new XMLHttpRequest();
 // Beep sound taken from Audiosoundclips.com:
