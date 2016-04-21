@@ -74,14 +74,16 @@ function setMuteButtonText() {
 }
 setMuteButtonText();
 
-var DEFAULT_MM = 60;
+var MM_DEFAULT = 60;
+var MM_MIN = 1;
+var MM_MAX = 250;
 
 if (!haveLocalStorage) {
-    bpm.setAttribute('value', DEFAULT_MM);
+    bpm.setAttribute('value', MM_DEFAULT);
 } else {
     if (!localStorage.getItem('bpm')) {
-        bpm.setAttribute('value', DEFAULT_MM);
-        localStorage.setItem('bpm', JSON.stringify(DEFAULT_MM));
+        bpm.setAttribute('value', MM_DEFAULT);
+        localStorage.setItem('bpm', JSON.stringify(MM_DEFAULT));
     } else {
         bpm.setAttribute('value', JSON.parse(localStorage.getItem('bpm')));
     }
@@ -411,9 +413,22 @@ function scheduleOffbeatSound(buffer, time) {
 }
 
 function setSecondsPerBeat() {
-    var val = bpm.value;
+    var val = getNormalizedInput(bpm.value);
     secondsPerBeat = 60/val;
     if (haveLocalStorage) {
         localStorage.setItem('bpm', JSON.stringify(val));
     }
+}
+
+/**
+    If user input is out of supported bounds, modify it and display.
+*/
+function getNormalizedInput(inp) {
+    if (inp < MM_MIN || inp > MM_MAX) {
+        inp = Math.max(MM_MIN, inp);
+        inp = Math.min(inp, MM_MAX);
+        // update display with normalized value
+        bpm.value = inp;
+    }
+    return inp;
 }
