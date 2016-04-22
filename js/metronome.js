@@ -51,7 +51,7 @@ var on = document.getElementById('start'),
     duple = document.getElementById('duple'),
     triple = document.getElementById('triple'),
     lights = document.getElementById('lights'),
-    bpm = document.getElementById('bpm');
+    bpm = document.getElementById('bpm'),
     mute = document.getElementById('mute');
 
 /**
@@ -63,19 +63,6 @@ for (var i = 0; i < 4; i++) {
     light.setAttribute('id', 'beat' + i);
     lights.appendChild(light);
 }
-
-var beepFrame = false,
-    playSubdivisions = false;
-
-var secondsPerBeat;
-/**
-    an object storing sounds and their location within the pattern.  Location
-    is expressed as a floating-point number between 0.0 and 1.0.  This will
-    be multiplied by secondsPerBeat to give the offset in seconds.
-
-    Syntax: [[buffer1, fraction1], [buffer2, fraction2]]
-*/
-var pattern = [];
 
 /**
     Initial mute/unmute
@@ -169,7 +156,6 @@ get('Beep.mp3').then(function(response) {
     get('metronome_sound.mp3').then(function(response) {
         audioCtx.decodeAudioData(response, function (buffer) {
             soundLibrary.unshift(buffer);
-            console.log(soundLibrary);
             init();
         });
     }, function(error) {
@@ -181,19 +167,96 @@ function init() {
     // assign sounds
     var beatBuffer = soundLibrary[0];
     var subdivisionBuffer = soundLibrary[1];
+    /**
+        An object storing sounds and their location within the pattern.  Location
+        is expressed as a floating-point number between 0.0 and 1.0.  This will
+        be multiplied by secondsPerBeat to give the offset in seconds.
 
-    // initialize pattern with a single beat
-    pattern.push([beatBuffer, 0.0]);
+        Syntax: [[buffer1, fraction1], [buffer2, fraction2]]
+    */
+    var pattern = [[beatBuffer, 0.0]];
+
+    /**
+        Flags representing initiation and termination of a count.
+    */
+    var countJustBegun,
+        endSignalled;
+    /**
+        Stores id for animation frame to control repetition/stop of count.
+    */
+    var beepFrame = false;
+    /**
+        How much the first beep will happen after the start
+        button is clicked.  We do this partly so that first beat is
+        not shortened -- noticeably so on my Samsung Galaxy SIII.
+    */
+    var startOffset = 0.4;
+    var whereInPattern;
+    var beat;
+    var visualBeats = document.getElementsByClassName('visualbeat');
+    // default = no subdivision
+    var division = 1;
+    var playSubdivisions = false;
+
+    var secondsPerBeat;
+    /**
+        Flag indicating whether we have changed tempo or changed to
+        subdivisions or back to beats only.
+    */
+    var handleRateChange = false;
+    /**
+        Local tempo; needed b/c we only change tempo by the pattern
+        statement, though the user can request a change at any time.
+    */
+    var patternSeconds,
+        patternStartTime;
+
+    var newNoteEntry,
+        lastNoteTime,
+        newNoteTime;
+
+    // Array to store note times for visual synchronization
+    //var noteTimeArray;
+
+
+    /*************************** FUNCTIONS *****************************/
+
+    function setSecondsPerBeat() {
+        var val = getNormalizedInput(bpm.value);
+        secondsPerBeat = 60/val;
+        if (haveLocalStorage) {
+            localStorage.setItem('bpm', JSON.stringify(val));
+        }
+    }
+
+    function resetPattern() {
+        pattern = [[beatBuffer, 0.0]];
+        whereInPattern = 0; // why needed? set to 0 in beepFunction ...
+    }
+
+    function updatePattern() {
+        resetPattern();
+        if (division > 1) {
+            for(var i = 1; i < division; i++) {
+                pattern.push([subdivisionBuffer, i * 1/division]);
+            }
+        }
+    }
+
+    function toggleSound() {
+        muted = !muted;
+        if (haveLocalStorage) {
+            localStorage.setItem('muted', JSON.stringify(muted));
+        }
+        setMuteButtonText();
+        // So spacebar can be used right after mouseclick
+        mute.blur();
+    }
 
     /**
         Very rough visuals.
     */
-    // Array to store note times for visual synchronization
-    //var noteTimeArray;
-    var visualBeats = document.getElementsByClassName('visualbeat');
-    var beat;
-
-    var updateDisplay = function() {
+    function updateDisplay() {
         // Show new beat.
         // Hmm.  If endSignalled and we are on a subdivision other than last,
         // we don't want to show anything.  Instead we want to hold and
@@ -223,52 +286,7 @@ function init() {
         }
 
        // if (noteTimeArray.length) noteTimeArray.shift();
-    };
-
-    var whereInPattern;
-    // default = no subdivision
-    var division = 1;
-
-    function resetPattern() {
-        pattern = [[beatBuffer, 0.0]];
-        whereInPattern = 0; // why needed? set to 0 in beepFunction ...
     }
-
-    function updatePattern() {
-        resetPattern();
-        if (division > 1) {
-            for(var i = 1; i < division; i++) {
-                pattern.push([subdivisionBuffer, i * 1/division]);
-            }
-        }
-    }
-
-    /**
-        Flags representing initiation and termination of a count.
-    */
-    var countJustBegun,
-        endSignalled;
-    /**
-        How much the first beep will happen after the start
-        button is clicked.  We do this partly so that first beat is
-        not shortened -- noticeably so on my Samsung Galaxy SIII.
-    */
-    var startOffset = 0.4;
-    /**
-        Local tempo; needed b/c we only change tempo by the pattern
-        statement, though the user can request a change at any time.
-    */
-    var patternSeconds,
-        patternStartTime;
-
-    var newNoteEntry,
-        lastNoteTime,
-        newNoteTime;
-    /**
-        Flag indicating whether we have changed tempo or changed to
-        subdivisions or back to beats only.
-    */
-    var handleRateChange = false;
 
     /**
         This function handles audio scheduling and updates the display
@@ -280,7 +298,7 @@ function init() {
         last *tock*, we continue to watch the time in order
         to call a screen update when the last sound arrives.
     */
-    var beepFunction = function() {
+    function beepFunction() {
         /**
             As soon as possible after a note starts playing, schedule
             the next one.
@@ -367,13 +385,16 @@ function init() {
 
                 // Subdivision disabled in visuals; only downbeats added to array
                 //if (whereInPattern === 0) {
-                 //   noteTimeArray.push(lastNoteTime);
-            //}
+                //    noteTimeArray.push(lastNoteTime);
+                //}
             }
         }
 
         beepFrame = requestAnimationFrame(beepFunction);
-    };
+    }
+
+
+    /************************ EVENT HANDLERS **************************/
 
     on.onclick = function() {
         setSecondsPerBeat();
@@ -413,6 +434,7 @@ function init() {
         setSecondsPerBeat();
         handleRateChange = true;
     };
+
     /**
         Subdivide
     */
@@ -446,16 +468,6 @@ function init() {
 
         Pressing mute/unmute button or spacebar toggles sound.
     */
-    function toggleSound() {
-        muted = !muted;
-        if (haveLocalStorage) {
-            localStorage.setItem('muted', JSON.stringify(muted));
-        }
-        setMuteButtonText();
-        // So spacebar can be used right after mouseclick
-        mute.blur();
-    }
-
     mute.onclick = function() {
         console.log();
         toggleSound();
@@ -476,14 +488,6 @@ function scheduleSound(buffer, time, gain) {
     bufferSource.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     bufferSource.start(time);
-}
-
-function setSecondsPerBeat() {
-    var val = getNormalizedInput(bpm.value);
-    secondsPerBeat = 60/val;
-    if (haveLocalStorage) {
-        localStorage.setItem('bpm', JSON.stringify(val));
-    }
 }
 
 /**
