@@ -104,6 +104,7 @@ if (!haveLocalStorage) {
 
 /**
     Retrieve sounds and store decoded data in soundLibrary array.
+    An entry of 'false' indicates an unsuccessful load.
 
     Once all sounds are loaded, call init function.
 
@@ -116,15 +117,19 @@ if (!haveLocalStorage) {
 
 var soundLibrary = [];
 
-function loadSound(url, cb) {
+var soundFiles = ['metronome_sound.mp3', 'Beep.mp3', 'beepcopy.mp3'];
+
+function loadSound(url) {
+    var fileCount = soundFiles.length;
     var req = new XMLHttpRequest();
     req.open('GET', url);
     req.responseType = 'arraybuffer';
     req.onload = function(response) {
         if (req.status == 200) {
             audioCtx.decodeAudioData(req.response, function (buffer) {
-                soundLibrary.unshift(buffer);
-                cb();
+                soundLibrary.push(buffer);
+                // we assume that one file will be processed last...
+                if (soundLibrary.length == fileCount) init();
             });
         } else {
             console.log('Problem loading sound file.');
@@ -134,18 +139,16 @@ function loadSound(url, cb) {
                 sound load, we would probably copy that buffer to both
                 slots.
             */
-            cb();
+            soundLibrary.push(false);
+            if (soundLibrary.length == fileCount) init();
         }
     };
     req.send();
 }
 
-loadSound(
-    'Beep.mp3',
-    function() {
-        loadSound('metronome_sound.mp3', init);
-    }
-);
+soundFiles.forEach(function(url) {
+    loadSound(url);
+});
 
 /**
     Called when sounds are loaded.
