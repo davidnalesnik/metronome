@@ -103,39 +103,6 @@ if (!haveLocalStorage) {
 }
 
 /**
-    Build a library of sounds to use.
-*/
-
-var soundLibrary = [];
-
-/**
-    Function for getting sound files.  This has been modified from
-    the function at http://www.html5rocks.com/en/tutorials/es6/promises/
-*/
-function get(url) {
-  return new Promise(function(resolve, reject) {
-      var request = new XMLHttpRequest();
-      request.open('GET', url);
-      request.responseType = 'arraybuffer';
-
-      request.onload = function() {
-          if (request.status == 200) {
-            resolve(request.response);
-          }
-          else {
-            reject(Error(request.statusText));
-          }
-      };
-
-      request.onerror = function() {
-          reject(Error("Network Error"));
-      };
-
-      request.send();
-  });
-}
-
-/**
     Retrieve sounds and store decoded data in soundLibrary array.
 
     Once all sounds are loaded, call init function.
@@ -146,31 +113,52 @@ function get(url) {
     metronome_sound.mp3 derived from metronome sound by Mike Koenig:
     http://soundbible.com/914-Metronome.html
 */
-get('Beep.mp3').then(function(response) {
-    audioCtx.decodeAudioData(response, function (buffer) {
-        soundLibrary.unshift(buffer);
-    });
-}, function(error) {
-    console.log(error);
-}).then(function() {
-    get('metronome_sound.mp3').then(function(response) {
-        audioCtx.decodeAudioData(response, function (buffer) {
-            soundLibrary.unshift(buffer);
-            init();
-        });
-    }, function(error) {
-        console.log(error);
-    });
-});
 
+var soundLibrary = [];
+
+function loadSound(url, cb) {
+    var req = new XMLHttpRequest();
+    req.open('GET', url);
+    req.responseType = 'arraybuffer';
+    req.onload = function(response) {
+        if (req.status == 200) {
+            audioCtx.decodeAudioData(req.response, function (buffer) {
+                soundLibrary.unshift(buffer);
+                cb();
+            });
+        } else {
+            console.log('Problem loading sound file.');
+            /**
+                Note: We will have to make sure that soundLibrary has
+                two sounds in it.  In the case of a single successful
+                sound load, we would probably copy that buffer to both
+                slots.
+            */
+            cb();
+        }
+    };
+    req.send();
+}
+
+loadSound(
+    'Beep.mp3',
+    function() {
+        loadSound('metronome_sound.mp3', init);
+    }
+);
+
+/**
+    Called when sounds are loaded.
+*/
 function init() {
     // assign sounds
     var beatBuffer = soundLibrary[0];
     var subdivisionBuffer = soundLibrary[1];
     /**
-        An object storing sounds and their location within the pattern.  Location
-        is expressed as a floating-point number between 0.0 and 1.0.  This will
-        be multiplied by secondsPerBeat to give the offset in seconds.
+        An object storing sounds and their location within the pattern.
+        Location is expressed as a floating-point number between 0.0 and 1.0.
+        This will be multiplied by secondsPerBeat to give the offset in
+        seconds.
 
         Syntax: [[buffer1, fraction1], [buffer2, fraction2]]
     */
