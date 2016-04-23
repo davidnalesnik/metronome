@@ -103,8 +103,9 @@ if (!haveLocalStorage) {
 }
 
 /**
-    Retrieve sounds and store decoded data in soundLibrary array.
-    An entry of 'false' indicates an unsuccessful load.
+    Retrieve sounds and store decoded data in soundLibrary object
+    with meaningful identifiers. An entry of 'false' indicates an
+    unsuccessful load.
 
     Once all sounds are loaded, call init function.
 
@@ -115,11 +116,15 @@ if (!haveLocalStorage) {
     http://soundbible.com/914-Metronome.html
 */
 
-var soundLibrary = [];
+var soundLibrary = {};
 
-var soundFiles = ['metronome_sound.mp3', 'Beep.mp3', 'beepcopy.mp3'];
+var soundFiles = {
+    tock: 'metronome_sound.mp3',
+    harshBeep: 'Beep.mp3',
+    harshBeepCopy: 'beepcopy.mp3'
+};
 
-function loadSound(url) {
+function loadSound(key, url) {
     var fileCount = soundFiles.length;
     var req = new XMLHttpRequest();
     req.open('GET', url);
@@ -127,7 +132,7 @@ function loadSound(url) {
     req.onload = function(response) {
         if (req.status == 200) {
             audioCtx.decodeAudioData(req.response, function (buffer) {
-                soundLibrary.push(buffer);
+                soundLibrary[key] = buffer;
                 // we assume that one file will be processed last...
                 if (soundLibrary.length == fileCount) init();
             });
@@ -139,24 +144,26 @@ function loadSound(url) {
                 sound load, we would probably copy that buffer to both
                 slots.
             */
-            soundLibrary.push(false);
+            soundLibrary[key] = false;
             if (soundLibrary.length == fileCount) init();
         }
     };
     req.send();
 }
 
-soundFiles.forEach(function(url) {
-    loadSound(url);
-});
+for (var key in soundFiles) {
+    if (soundFiles.hasOwnProperty(key)) {
+        loadSound(key, soundFiles[key]);
+    }
+}
 
 /**
     Called when sounds are loaded.
 */
 function init() {
     // assign sounds
-    var beatBuffer = soundLibrary[0];
-    var subdivisionBuffer = soundLibrary[1];
+    var beatBuffer = soundLibrary.tock;
+    var subdivisionBuffer = soundLibrary.harshBeepCopy;
     /**
         An object storing sounds and their location within the pattern.
         Location is expressed as a floating-point number between 0.0 and 1.0.
