@@ -17,14 +17,25 @@
                 <button id="stop">Stop</button>
             </div>
             <div id="subdivisioncontrols">
-                <button id="subdivide">subdivide</button>
+                Notes per beat:
                 <select id="divisions">
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
                 </select>
+                <button id="subdivide">subdivide</button>
             </div>
-            <div id="lights"></div>
+            <div id="beatbubblecontrols">
+                <div id="beatbubbles"></div>
+                Number of beats:
+                <select id="beatcount">
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
+            </div>
         </div>
         <script src="js/metronome.js"></script>
     </body>

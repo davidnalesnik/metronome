@@ -49,19 +49,10 @@ var on = document.getElementById('start'),
     inputBox = document.querySelector('input'),
     subdivide = document.getElementById('subdivide'),
     divisions = document.getElementById('divisions'),
-    lights = document.getElementById('lights'),
+    beatBubbles = document.getElementById('beatbubbles'),
+    beatCount = document.getElementById('beatcount'),
     bpm = document.getElementById('bpm'),
     mute = document.getElementById('mute');
-
-/**
-    Create DOM elements for beat display.
-*/
-for (var i = 0; i < 4; i++) {
-    var light = document.createElement('div');
-    light.setAttribute('class', 'visualbeat');
-    light.setAttribute('id', 'beat' + i);
-    lights.appendChild(light);
-}
 
 /**
     Initial mute/unmute
@@ -160,6 +151,8 @@ for (var key in soundFiles) {
     Called when sounds are loaded.
 */
 function init() {
+    // Create DOM elements for beat display.
+    updateBeatDisplay();
     // assign sounds
     var beatBuffer = soundLibrary.tock;
     var subdivisionBuffer = soundLibrary.harshBeepCopy;
@@ -283,6 +276,30 @@ function init() {
         }
 
        // if (noteTimeArray.length) noteTimeArray.shift();
+    }
+
+    function addBeatBubble() {
+        var newBubble = document.createElement('div');
+        newBubble.setAttribute('class', 'visualbeat');
+        beatBubbles.appendChild(newBubble);
+    }
+
+    function removeBeatBubble() {
+        beatBubbles.removeChild(beatBubbles.lastElementChild);
+    }
+
+    function updateBeatDisplay() {
+        var vbs = document.getElementsByClassName('visualbeat');
+        var vbsCount = vbs.length;
+        var vbsRequested = beatCount.value;
+        if (vbsCount < vbsRequested) {
+            for (var i = 0; i < vbsRequested - vbsCount; i++)
+                addBeatBubble();
+        } else if (vbsCount > vbsRequested) {
+            for (var i = 0; i < vbsCount - vbsRequested; i++)
+                removeBeatBubble();
+            if (beat > vbsRequested) beat = 0;
+        }
     }
 
     /**
@@ -455,18 +472,17 @@ function init() {
         if (playSubdivisions) handleRateChange = true;
     };
 
+    beatCount.onchange = updateBeatDisplay;
+
     /**
         SOUND
 
         Pressing mute/unmute button or spacebar toggles sound.
     */
-    mute.onclick = function() {
-        console.log();
-        toggleSound();
-    };
+    mute.onclick = toggleSound;
 
     document.body.onkeyup = function(ev){
-        if(ev.keyCode == 32) {
+        if (ev.keyCode == 32) {
             toggleSound();
         }
     };

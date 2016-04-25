@@ -52,12 +52,12 @@ button {
 }
 
 #subdivide {
-    float: left;
+    /*float: left;*/
     font-size: 1em;
 }
 
 #divisions {
-    float: right;
+    /*float: right;*/
 }
 
 label {
