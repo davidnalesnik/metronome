@@ -48,8 +48,7 @@ var on = document.getElementById('start'),
     off = document.getElementById('stop'),
     inputBox = document.querySelector('input'),
     subdivide = document.getElementById('subdivide'),
-    duple = document.getElementById('duple'),
-    triple = document.getElementById('triple'),
+    divisions = document.getElementById('divisions'),
     lights = document.getElementById('lights'),
     bpm = document.getElementById('bpm'),
     mute = document.getElementById('mute');
@@ -440,7 +439,7 @@ function init() {
         playSubdivisions = !playSubdivisions; // toggle
 
         if (playSubdivisions) {
-            division = (duple.checked) ? 2 : 3;
+            division = divisions.value;
             subdivide.innerHTML = 'subdivide off';
         } else {
             resetPattern();
@@ -451,13 +450,8 @@ function init() {
         handleRateChange = true;
     };
 
-    duple.onclick = function() {
-        division = 2;
-        if (playSubdivisions) handleRateChange = true;
-    };
-
-    triple.onclick = function() {
-        division = 3;
+    divisions.onchange = function() {
+        division = divisions.value;
         if (playSubdivisions) handleRateChange = true;
     };
 
