@@ -44,13 +44,13 @@ function storageAvailable(type) {
 
 var haveLocalStorage = (storageAvailable('localStorage')) ? true : false;
 
-var on = document.getElementById('start'),
-    off = document.getElementById('stop'),
+var on = document.getElementById('start-button'),
+    off = document.getElementById('stop-button'),
     inputBox = document.querySelector('input'),
-    subdivide = document.getElementById('subdivide'),
+    subdivide = document.getElementById('subdivide-button'),
     divisions = document.getElementById('divisions'),
-    beatBubbles = document.getElementById('beatbubbles'),
-    beatCount = document.getElementById('beatcount'),
+    beatBubbles = document.getElementById('beat-bubbles'),
+    beatCount = document.getElementById('beat-count'),
     bpm = document.getElementById('bpm'),
     mute = document.getElementById('mute');
 
@@ -69,10 +69,10 @@ if (!haveLocalStorage) {
     }
 }
 
-function setMuteButtonText() {
-    mute.innerHTML = (muted) ? 'unmute' : 'mute';
+function updateMuteButtonDisplay() {
+    mute.classList.toggle('muted');
 }
-setMuteButtonText();
+updateMuteButtonDisplay();
 
 /**
     Initial tempo
@@ -238,7 +238,7 @@ function init() {
         if (haveLocalStorage) {
             localStorage.setItem('muted', JSON.stringify(muted));
         }
-        setMuteButtonText();
+        updateMuteButtonDisplay();
         // So spacebar can be used right after mouseclick
         mute.blur();
     }
@@ -296,7 +296,7 @@ function init() {
             for (var i = 0; i < vbsRequested - vbsCount; i++)
                 addBeatBubble();
         } else if (vbsCount > vbsRequested) {
-            for (var i = 0; i < vbsCount - vbsRequested; i++)
+            for (var j = 0; j < vbsCount - vbsRequested; j++)
                 removeBeatBubble();
             if (beat > vbsRequested) beat = 0;
         }

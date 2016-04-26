@@ -1,19 +1,14 @@
 body {
     font-size: 14pt;
     font-family: sans-serif;
-}
-
-#metronome {
-    width: 11em;
-    margin: 0 auto;
-    margin-top: 8em;
+    margin: 1em;
 }
 
 h1 {
     text-align: center;
 }
 
-#bpm {
+input {
     display: block;
     width: 90%;
     margin: 0 auto;
@@ -21,65 +16,74 @@ h1 {
     text-align: right;
 }
 
-#startstop {
-    width: 85%;
-    margin: 0 auto;
-    margin-top: 1.5em;
-}
-
 button {
     font-size: 1.4em;
     padding: 0.25em
 }
 
-#mute {
+.mute-button {
     float: right;
+    /* https://commons.wikimedia.org/wiki/File:Speaker_Icon.svg */
+    background-image: url(../images/Speaker_Icon.svg);
+    background-size: 100%;
+    height: 2em;
+    width: 2em;
+    vertical-align: middle;
 }
 
-#start {
-    color: green;
+.muted {
+    /* https://commons.wikimedia.org/wiki/File:Mute_Icon.svg */
+    background-image: url(../images/Mute_Icon.svg);
 }
 
-#stop {
-    float: right;
-    color: red;
+#metronome {
+    width: 11em;
+    margin: 0 auto;
+    margin-top: 4em;
 }
 
-#subdivisioncontrols {
+#start-stop-buttons {
     width: 85%;
     margin: 0 auto;
     margin-top: 1.5em;
 }
 
-#subdivide {
-    /*float: left;*/
-    font-size: 1em;
+#start-button {
+    color: green;
 }
 
-#divisions {
-    /*float: right;*/
+#stop-button {
+    float: right;
+    color: red;
 }
 
-label {
-    display: block;
+#beat-bubbles {
+    margin-top: 1.5em;
 }
 
-#subdivisioncontrols:after {
-    content: "";
-    clear: both;
-    display: block;
-}
-
-/******************************/
 .visualbeat {
     height: 1em;
     width: 1em;
     display: inline-block;
-    margin: 1em;
+    margin: 0.25em;
     border: 2px solid;
     border-radius: 50%;
 }
 
 .show {
     background-color: red;
+}
+
+#options {
+    margin-top: 1.5em;
+    line-height: 2em;
+}
+
+#subdivide {
+    text-align: center;
+    margin-top: 1.5em;
+}
+
+#subdivide-button {
+    font-size: 1em;
 }

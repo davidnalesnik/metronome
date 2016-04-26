@@ -4,36 +4,38 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Metronome</title>
+        <!-- https://necolas.github.io/normalize.css/ -->
+        <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <button id="mute"></button>
+        <button class="mute-button" id="mute"></button>
         <br>
         <div id="metronome">
             <h1>Metronome</h1>
             <input id="bpm" name="bpm" type="number" min="1" max="250">
-            <div id="startstop">
-                <button id="start">Start</button>
-                <button id="stop">Stop</button>
+            <div id="start-stop-buttons">
+                <button id="start-button">Start</button>
+                <button id="stop-button">Stop</button>
             </div>
-            <div id="subdivisioncontrols">
+            <div id="subdivide">
+                <button id="subdivide-button">subdivide</button>
+            </div>
+            <div id="beat-bubbles"></div>
+            <div id="options">
+                Number of beats:
+                <select id="beat-count">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4" selected>4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
                 Notes per beat:
                 <select id="divisions">
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
-                </select>
-                <button id="subdivide">subdivide</button>
-            </div>
-            <div id="beatbubblecontrols">
-                <div id="beatbubbles"></div>
-                Number of beats:
-                <select id="beatcount">
-                    <option value="2">2</option>
-                    <option value="3" selected>3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
                 </select>
             </div>
         </div>
