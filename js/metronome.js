@@ -70,8 +70,15 @@ if (!haveLocalStorage) {
 }
 
 function updateMuteButtonDisplay() {
-    mute.classList.toggle('muted');
+    var list = mute.classList;
+    var hasMutedClass = list.contains('muted');
+    if (muted && !hasMutedClass) {
+        list.add('muted');
+    } else if (!muted && hasMutedClass) {
+        list.remove('muted');
+    }
 }
+
 updateMuteButtonDisplay();
 
 /**
