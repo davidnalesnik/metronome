@@ -1,11 +1,12 @@
 /**
     TODO:
-     - use multiple sounds
-     - add settings menu
+     - collect more sounds
+     - provide mechanism for choosing sounds
+     - add sliding settings menu
      - allow visuals to be turned off
-     - number of beat boxes variable
      - metric accentuation
-     - remember settings between sessions
+     - remember more settings between sessions (meter, sound
+     assignments)
 */
 
 /**
@@ -42,7 +43,7 @@ function storageAvailable(type) {
 	}
 }
 
-var haveLocalStorage = (storageAvailable('localStorage')) ? true : false;
+var haveLocalStorage = storageAvailable('localStorage');
 
 var on = document.getElementById('start-button'),
     off = document.getElementById('stop-button'),
@@ -172,7 +173,6 @@ function init() {
         Syntax: [[buffer1, fraction1], [buffer2, fraction2]]
     */
     var pattern = [[beatBuffer, 0.0]];
-
     /**
         Flags representing initiation and termination of a count.
     */
@@ -249,7 +249,9 @@ function init() {
     }
 
     /**
-        Very rough visuals.
+        Create visual representation of beat.
+
+        Currently, subdivisions are not shown.
     */
     function updateDisplay() {
         /**
@@ -294,7 +296,9 @@ function init() {
     function removeBeatBubble() {
         beatBubbles.removeChild(beatBubbles.lastElementChild);
     }
-
+    /**
+        Add or remove beat bubbles when a new size is selected.
+    */
     function updateBeatDisplay() {
         var vbs = document.getElementsByClassName('visualbeat');
         var vbsCount = vbs.length;
@@ -396,11 +400,7 @@ function init() {
 
                 newNoteEntry = pattern[whereInPattern];
                 newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
-                if (whereInPattern === 0) { // beat
-                    scheduleSound(newNoteEntry[0], newNoteTime, 1.0);
-                } else {  // subdivision
-                    scheduleSound(newNoteEntry[0], newNoteTime, 1.0);
-                }
+                scheduleSound(newNoteEntry[0], newNoteTime, 1.0);
 
                 if (countJustBegun) {
                     countJustBegun = false;
@@ -497,6 +497,9 @@ function init() {
         SOUND
 
         Pressing mute/unmute button or spacebar toggles sound.
+
+        Spacebar usually reserved for start/stop -- better choice
+        for mute/unmute?
     */
     mute.onclick = toggleSound;
 
