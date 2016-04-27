@@ -189,8 +189,9 @@ function init() {
     */
     var startOffset = 0.4;
     var whereInPattern;
-    var beat;
     var visualBeats = document.getElementsByClassName('visualbeat');
+    var previousBeat = visualBeats.length - 1,
+        beat;
     // default = no subdivision
     var division = 1;
     var playSubdivisions = false;
@@ -211,9 +212,6 @@ function init() {
     var newNoteEntry,
         lastNoteTime,
         newNoteTime;
-
-    // Array to store note times for visual synchronization
-    //var noteTimeArray;
 
 
     /*************************** FUNCTIONS *****************************/
@@ -254,19 +252,23 @@ function init() {
         Very rough visuals.
     */
     function updateDisplay() {
-        // Show new beat.
-        // Hmm.  If endSignalled and we are on a subdivision other than last,
-        // we don't want to show anything.  Instead we want to hold and
-        // erase the current beat.
+        /**
+            Show new beat.
+
+            Check: If endSignalled and we are on a subdivision other than last,
+            we don't want to show anything.  Instead we want to hold and
+            erase the current beat.
+        */
         visualBeats[beat].style.backgroundColor = 'red';
+        /**
+            Hide the previous beat.
 
-        // Hide previous beat.
-        if (beat === 0) {
-            visualBeats[visualBeats.length - 1].style.backgroundColor = 'white';
-        } else {
-            visualBeats[beat - 1].style.backgroundColor = 'white';
-        }
-
+            We shouldn't need to check previousBeat's value here.
+            Somehow, it occasionally ends up being too large when
+            downsizing...
+        */
+        if (previousBeat < beatCount.value)
+            visualBeats[previousBeat].style.backgroundColor = 'white';
         // Clear the last element when the count has stopped.
         if (endSignalled) {
             /**
@@ -281,8 +283,6 @@ function init() {
                 visualBeats[finalBeat].style.backgroundColor = 'white';
             }, secondsPerBeat * 1000);
         }
-
-       // if (noteTimeArray.length) noteTimeArray.shift();
     }
 
     function addBeatBubble() {
@@ -305,7 +305,6 @@ function init() {
         } else if (vbsCount > vbsRequested) {
             for (var j = 0; j < vbsCount - vbsRequested; j++)
                 removeBeatBubble();
-            if (beat > vbsRequested) beat = 0;
         }
     }
 
@@ -318,6 +317,8 @@ function init() {
         are prepared for the future.  After scheduling the
         last *tock*, we continue to watch the time in order
         to call a screen update when the last sound arrives.
+
+        TODO: if possible, simplify this.
     */
     function beepFunction() {
         /**
@@ -328,7 +329,7 @@ function init() {
             below will always be true.  Current time will drift from
             last note time.  Notes will be scheduled further and
             further in the past (meaning that they will sound in
-            the present).
+            the present).  (Moot now that tempo input is limited.)
         */
         if (audioCtx.currentTime >= lastNoteTime){
             /**
@@ -347,12 +348,15 @@ function init() {
             }
 
             /**
-                Advance "beat" for display.
+                Advance beat and previousBeat.  (Beat is used to
+                fill in bubbles, previousBeat to clear them.)
             */
             if (!endSignalled && whereInPattern == pattern.length - 1) {
                 if (beat === visualBeats.length - 1) {
+                    previousBeat = visualBeats.length - 1;
                     beat = 0;
                 } else {
+                    previousBeat = beat;
                     beat++;
                 }
             }
@@ -403,11 +407,6 @@ function init() {
                 }
 
                 lastNoteTime = newNoteTime;
-
-                // Subdivision disabled in visuals; only downbeats added to array
-                //if (whereInPattern === 0) {
-                //    noteTimeArray.push(lastNoteTime);
-                //}
             }
         }
 
@@ -426,8 +425,11 @@ function init() {
         if (!beepFrame) {
             countJustBegun = true;
             endSignalled = false;
-            //noteTimeArray = [];
-            beat = -1;
+            /**
+                Set beat to last beat of count.  It will be incremented
+                to 0 when beepFunction is called.
+            */
+            beat = visualBeats.length - 1;
             patternSeconds = secondsPerBeat;
             patternStartTime = audioCtx.currentTime + startOffset;
             // set to -1 so beepFunction loop triggers immediately
@@ -479,7 +481,17 @@ function init() {
         if (playSubdivisions) handleRateChange = true;
     };
 
-    beatCount.onchange = updateBeatDisplay;
+    beatCount.onchange = function() {
+        /**
+            When decreasing the length of the measure, the current
+            beat may be too large.  Resetting to zero (downbeat) is
+            the only sensible option.  We aren't concerned about
+            previousBeat in this case, because any bubble that would
+            be filled in is removed.
+        */
+        if (beat > this.value - 1) beat = 0;
+        updateBeatDisplay();
+    };
 
     /**
         SOUND
