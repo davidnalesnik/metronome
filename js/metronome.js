@@ -12,6 +12,7 @@
 /**
     Create AudioContext.
 */
+
 try {
     var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 } catch (e) {
@@ -19,11 +20,36 @@ try {
 }
 
 /**
+    DOM selectors
+*/
+
+var on = document.getElementById('start-button'),
+    off = document.getElementById('stop-button'),
+    inputBox = document.querySelector('input'),
+    subdivide = document.getElementById('subdivide-button'),
+    divisions = document.getElementById('divisions'),
+    beatBubbles = document.getElementById('beat-bubbles'),
+    beatCount = document.getElementById('beat-count'),
+    bpm = document.getElementById('bpm'),
+    mute = document.getElementById('mute');
+
+/**
+    Default settings
+*/
+
+var MUTED_DEFAULT = false;
+var MM_DEFAULT = 60;
+var MM_MIN = 1;
+var MM_MAX = 250;
+var BEAT_COUNT_DEFAULT = 4;
+
+/**
     DATA STORAGE
 
     Settings persist between sessions.  Currently, this is limited to
-    whether sound is muted or not and the tempo.  If the browser does
-    not support the Web Storage API, we will use default values.
+    whether sound is muted or not, the tempo, and the number of beats
+    displayed.  If the browser does not support the Web Storage API, we
+    will use default values.
 */
 
 /**
@@ -45,30 +71,44 @@ function storageAvailable(type) {
 
 var haveLocalStorage = storageAvailable('localStorage');
 
-var on = document.getElementById('start-button'),
-    off = document.getElementById('stop-button'),
-    inputBox = document.querySelector('input'),
-    subdivide = document.getElementById('subdivide-button'),
-    divisions = document.getElementById('divisions'),
-    beatBubbles = document.getElementById('beat-bubbles'),
-    beatCount = document.getElementById('beat-count'),
-    bpm = document.getElementById('bpm'),
-    mute = document.getElementById('mute');
+/**
+    Function used to initialize a variable considering the availability of
+    local browser storage.  Will write to local storage if target property
+    doesn't exist.
+*/
+function manageStoredVariable(name, val) {
+    if (haveLocalStorage) {
+        var setting = localStorage.getItem(name);
+        if (setting) return JSON.parse(setting);
+        localStorage.setItem(name, val);
+    }
+    return val;
+}
+
+/**
+    Function to initialize attributes of DOM elements considering the
+    availability of local browser storage.  Will write to local storage if
+    target property doesn't exist.
+*/
+function manageStoredProperty(elt, name, prop, val) {
+    if (haveLocalStorage) {
+        var setting = localStorage.getItem(name);
+        if (setting) {
+            elt.setAttribute(prop, JSON.parse(setting));
+        } else {
+            elt.setAttribute(prop, val);
+            localStorage.setItem(name, JSON.stringify(val));
+        }
+    } else {
+        elt.setAttribute(prop, val);
+    }
+}
 
 /**
     Initial mute/unmute
 */
-var muted;
-if (!haveLocalStorage) {
-    muted = false;
-} else {
-    if (!localStorage.getItem('muted')) {
-        localStorage.setItem('muted', 'false');
-        muted = false;
-    } else {
-        muted = JSON.parse(localStorage.getItem('muted'));
-    }
-}
+
+var muted = manageStoredVariable('muted', MUTED_DEFAULT);
 
 function updateMuteButtonDisplay() {
     var list = mute.classList;
@@ -85,22 +125,18 @@ updateMuteButtonDisplay();
 /**
     Initial tempo
 */
-var MM_DEFAULT = 60;
-var MM_MIN = 1;
-var MM_MAX = 250;
-
-if (!haveLocalStorage) {
-    bpm.setAttribute('value', MM_DEFAULT);
-} else {
-    if (!localStorage.getItem('bpm')) {
-        bpm.setAttribute('value', MM_DEFAULT);
-        localStorage.setItem('bpm', JSON.stringify(MM_DEFAULT));
-    } else {
-        bpm.setAttribute('value', JSON.parse(localStorage.getItem('bpm')));
-    }
-}
+manageStoredProperty(bpm, 'bpm', 'value', MM_DEFAULT);
 
 /**
+    Initial beat count
+*/
+var numberOfBeats = manageStoredVariable('numberOfBeats', BEAT_COUNT_DEFAULT);
+
+beatCount[numberOfBeats - 2].setAttribute('selected', true);
+
+/**
+    LOAD SOUNDS
+
     Retrieve sounds and store decoded data in soundLibrary object
     with meaningful identifiers. An entry of 'false' indicates an
     unsuccessful load.
@@ -309,6 +345,9 @@ function init() {
         } else if (vbsCount > vbsRequested) {
             for (var j = 0; j < vbsCount - vbsRequested; j++)
                 removeBeatBubble();
+        }
+        if (haveLocalStorage) {
+            localStorage.setItem('numberOfBeats', JSON.stringify(vbsRequested));
         }
     }
 
