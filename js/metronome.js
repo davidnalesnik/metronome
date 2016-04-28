@@ -72,8 +72,8 @@ function storageAvailable(type) {
 var haveLocalStorage = storageAvailable('localStorage');
 
 /**
-    Function used to initialize a variable considering the availability of
-    local browser storage.  Will write to local storage if target property
+    Function used to initialize a variable taking into account local
+    browser storage.  Will write to local storage if target property
     doesn't exist.
 */
 function manageStoredVariable(name, val) {
@@ -86,9 +86,9 @@ function manageStoredVariable(name, val) {
 }
 
 /**
-    Function to initialize attributes of DOM elements considering the
-    availability of local browser storage.  Will write to local storage if
-    target property doesn't exist.
+    Function to initialize attributes of DOM elements taking into account
+    local browser storage.  Will write to local storage if target property
+    doesn't exist.
 */
 function manageStoredProperty(elt, name, prop, val) {
     if (haveLocalStorage) {
@@ -175,8 +175,8 @@ function loadSound(key, url) {
             /**
                 Note: We will have to make sure that soundLibrary has
                 two sounds in it.  In the case of a single successful
-                sound load, we would probably copy that buffer to both
-                slots.
+                sound load, we would probably copy that buffer to the
+                other slot.
             */
             soundLibrary[key] = false;
             if (soundLibrary.length == fileCount) init();
@@ -317,7 +317,7 @@ function init() {
                 meantime.)
             */
             var finalBeat = beat;
-            var timeoutID = setTimeout(function() {
+            setTimeout(function() {
                 visualBeats[finalBeat].style.backgroundColor = 'white';
             }, secondsPerBeat * 1000);
         }
