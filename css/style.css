@@ -10,8 +10,7 @@ h1 {
 
 input {
     display: block;
-    width: 90%;
-    margin: 0 auto;
+    width: 100%;
     font-size: 2em;
     text-align: right;
 }
@@ -19,6 +18,12 @@ input {
 button {
     font-size: 1.4em;
     padding: 0.25em
+}
+
+/* Introduced so input element doesn't shift */
+#input-container {
+    width: 90%;
+    margin: 0 auto;
 }
 
 .mute-button {
@@ -40,8 +45,10 @@ button {
     width: 11em;
     padding: 1.5em;
     margin: 0 auto;
-    border: 3px solid;
-    background-color: #f0f0f0;
+    /*border: 3px solid black;*/
+    border-radius: 1em;
+    background-color: #35333c;
+    color: #d4b22f; /*#ddeeff;*/
 }
 
 #start-stop-buttons,
@@ -80,7 +87,7 @@ button {
     width: 1em;
     display: inline-block;
     margin: 0.25em;
-    border: 2px solid;
+    border: 2px solid black;
     border-radius: 50%;
     background-color: white;
 }
