@@ -1,12 +1,12 @@
 /**
     TODO:
-     - collect more sounds
-     - provide mechanism for choosing sounds
-     - add sliding settings menu
-     - allow visuals to be turned off
-     - metric accentuation
-     - remember more settings between sessions (meter, sound
-     assignments)
+    - collect more sounds
+    - provide mechanism for choosing sounds
+    - add sliding settings menu
+    - allow visuals to be turned off
+    - metric accentuation
+    - remember more settings between sessions (meter, sound
+    assignments)
 */
 
 /**
@@ -57,16 +57,16 @@ var BEAT_COUNT_DEFAULT = 4;
     https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
 */
 function storageAvailable(type) {
-	try {
-		var storage = window[type],
-			x = '__storage_test__';
-		storage.setItem(x, x);
-		storage.removeItem(x);
-		return true;
-	}
-	catch(e) {
-		return false;
-	}
+    try {
+        var storage = window[type],
+        x = '__storage_test__';
+        storage.setItem(x, x);
+        storage.removeItem(x);
+        return true;
+    }
+    catch(e) {
+        return false;
+    }
 }
 
 var haveLocalStorage = storageAvailable('localStorage');
@@ -227,7 +227,7 @@ function init() {
     var whereInPattern;
     var visualBeats = document.getElementsByClassName('visualbeat');
     var previousBeat = visualBeats.length - 1,
-        beat;
+    beat;
     // default = no subdivision
     var division = 1;
     var playSubdivisions = false;
@@ -539,12 +539,40 @@ function init() {
 
         Spacebar usually reserved for start/stop -- better choice
         for mute/unmute?
+
+        TEMPO TAPPER
+
+        Tapping on any key other than the spacebar 5 times in a
+        new tempo will change the metronome's rate.
+
+        TODO: make this practical on mobile
     */
     mute.onclick = toggleSound;
 
+    var tempoTapperArray = [];
+
     document.body.onkeyup = function(ev){
+        /** MUTE/UNMUTE **/
         if (ev.keyCode == 32) {
             toggleSound();
+        }
+        /** TEMPO TAPPER **/
+        if (ev.keyCode !== 32) {
+            tempoTapperArray.push(audioCtx.currentTime);
+            var arrayLen = tempoTapperArray.length;
+            if (arrayLen == 5) {
+                var deltas = [];
+                for(var i = 1; i < arrayLen; i++) {
+                    deltas.push(tempoTapperArray[i] - tempoTapperArray[i - 1]);
+                }
+                var avg = deltas.reduce(function (a, b) {
+                    return a + b;
+                }) / deltas.length;
+                inputBox.value = Math.round(60 / avg);
+                setSecondsPerBeat();
+                handleRateChange = true;
+                tempoTapperArray = [];
+            }
         }
     };
 }
