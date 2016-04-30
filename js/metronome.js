@@ -23,9 +23,11 @@ try {
     DOM selectors
 */
 
-var on = document.getElementById('start-button'),
+var metronome = document.getElementById('metronome'),
+    on = document.getElementById('start-button'),
     off = document.getElementById('stop-button'),
     inputBox = document.querySelector('input'),
+    tempoTapTarget = document.getElementById('tempo-tap-target'),
     subdivide = document.getElementById('subdivide-button'),
     divisions = document.getElementById('divisions'),
     beatBubbles = document.getElementById('beat-bubbles'),
@@ -249,6 +251,7 @@ function init() {
         lastNoteTime,
         newNoteTime;
 
+    var tempoTapperArray = [];
 
     /*************************** FUNCTIONS *****************************/
 
@@ -542,14 +545,31 @@ function init() {
 
         TEMPO TAPPER
 
-        Tapping on any key other than the spacebar 5 times in a
-        new tempo will change the metronome's rate.
+        Tapping on 't' 5 times in a new tempo will change the
+        metronome's rate.
 
         TODO: make this practical on mobile
     */
     mute.onclick = toggleSound;
 
-    var tempoTapperArray = [];
+    function setTappedTempo(ev) {
+        ev.preventDefault();
+        tempoTapperArray.push(audioCtx.currentTime);
+        var arrayLen = tempoTapperArray.length;
+        if (arrayLen == 5) {
+            var deltas = [];
+            for(var i = 1; i < arrayLen; i++) {
+                deltas.push(tempoTapperArray[i] - tempoTapperArray[i - 1]);
+            }
+            var avg = deltas.reduce(function (a, b) {
+                return a + b;
+            }) / deltas.length;
+            inputBox.value = Math.round(60 / avg);
+            setSecondsPerBeat();
+            handleRateChange = true;
+            tempoTapperArray = [];
+        }
+    }
 
     document.body.onkeyup = function(ev){
         /** MUTE/UNMUTE **/
@@ -557,24 +577,14 @@ function init() {
             toggleSound();
         }
         /** TEMPO TAPPER **/
-        if (ev.keyCode !== 32) {
-            tempoTapperArray.push(audioCtx.currentTime);
-            var arrayLen = tempoTapperArray.length;
-            if (arrayLen == 5) {
-                var deltas = [];
-                for(var i = 1; i < arrayLen; i++) {
-                    deltas.push(tempoTapperArray[i] - tempoTapperArray[i - 1]);
-                }
-                var avg = deltas.reduce(function (a, b) {
-                    return a + b;
-                }) / deltas.length;
-                inputBox.value = Math.round(60 / avg);
-                setSecondsPerBeat();
-                handleRateChange = true;
-                tempoTapperArray = [];
-            }
+        if (ev.keyCode == 84) {
+            setTappedTempo(ev);
         }
     };
+
+    tempoTapTarget.onclick = setTappedTempo;
+
+    tempoTapTarget.touchstart = setTappedTempo;
 }
 
 function scheduleSound(buffer, time, gain) {

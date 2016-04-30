@@ -9,8 +9,6 @@ h1 {
 }
 
 input {
-    display: block;
-    width: 100%;
     font-size: 2em;
     text-align: right;
 }
@@ -22,8 +20,27 @@ button {
 
 /* Introduced so input element doesn't shift */
 #input-container {
-    width: 90%;
-    margin: 0 auto;
+    width: 100%;
+}
+
+#bpm {
+    width: 60%;
+    float: left;
+}
+
+#tempo-tap-target {
+    float: right;
+    background-color: #f3f3f3;
+    height: 1.5em;
+    width: 1.5em;
+    border-radius: 50%;
+    font-size: 2em;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .mute-button {
@@ -45,10 +62,9 @@ button {
     width: 11em;
     padding: 1.5em;
     margin: 0 auto;
-    /*border: 3px solid black;*/
     border-radius: 1em;
     background-color: #35333c;
-    color: #d4b22f; /*#ddeeff;*/
+    color: #d4b22f;
 }
 
 #start-stop-buttons,
@@ -72,7 +88,8 @@ button {
     float: left;
 }
 
-#subdivide-mute-buttons:after {
+#subdivide-mute-buttons:after,
+#input-container:after {
     clear: both;
     content: "";
     display: table;
