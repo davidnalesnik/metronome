@@ -81,7 +81,9 @@ var haveLocalStorage = storageAvailable('localStorage');
 function manageStoredVariable(name, val) {
     if (haveLocalStorage) {
         var setting = localStorage.getItem(name);
-        if (setting) return JSON.parse(setting);
+        if (setting) {
+            return JSON.parse(setting);
+        }
         localStorage.setItem(name, val);
     }
     return val;
@@ -170,7 +172,9 @@ function loadSound(key, url) {
             audioCtx.decodeAudioData(req.response, function (buffer) {
                 soundLibrary[key] = buffer;
                 // we assume that one file will be processed last...
-                if (soundLibrary.length == fileCount) init();
+                if (soundLibrary.length == fileCount) {
+                    init();
+                }
             });
         } else {
             console.log('Problem loading sound file.');
@@ -181,7 +185,9 @@ function loadSound(key, url) {
                 other slot.
             */
             soundLibrary[key] = false;
-            if (soundLibrary.length == fileCount) init();
+            if (soundLibrary.length == fileCount) {
+                init();
+            }
         }
     };
     req.send();
@@ -229,7 +235,7 @@ function init() {
     var whereInPattern;
     var visualBeats = document.getElementsByClassName('visualbeat');
     var previousBeat = visualBeats.length - 1,
-    beat;
+        beat;
     // default = no subdivision
     var division = 1;
     var playSubdivisions = false;
@@ -308,8 +314,9 @@ function init() {
             Somehow, it occasionally ends up being too large when
             downsizing...
         */
-        if (previousBeat < beatCount.value)
+        if (previousBeat < beatCount.value) {
             visualBeats[previousBeat].style.backgroundColor = 'white';
+        }
         // Clear the last element when the count has stopped.
         if (endSignalled) {
             /**
@@ -343,11 +350,13 @@ function init() {
         var vbsCount = vbs.length;
         var vbsRequested = beatCount.value;
         if (vbsCount < vbsRequested) {
-            for (var i = 0; i < vbsRequested - vbsCount; i++)
+            for (var i = 0; i < vbsRequested - vbsCount; i++) {
                 addBeatBubble();
+            }
         } else if (vbsCount > vbsRequested) {
-            for (var j = 0; j < vbsCount - vbsRequested; j++)
+            for (var j = 0; j < vbsCount - vbsRequested; j++) {
                 removeBeatBubble();
+            }
         }
         if (haveLocalStorage) {
             localStorage.setItem('numberOfBeats', JSON.stringify(vbsRequested));
@@ -520,7 +529,9 @@ function init() {
 
     divisions.onchange = function() {
         division = divisions.value;
-        if (playSubdivisions) handleRateChange = true;
+        if (playSubdivisions) {
+            handleRateChange = true;
+        }
     };
 
     beatCount.onchange = function() {
@@ -531,7 +542,9 @@ function init() {
             previousBeat in this case, because any bubble that would
             be filled in is removed.
         */
-        if (beat > this.value - 1) beat = 0;
+        if (beat > this.value - 1) {
+            beat = 0;
+        }
         updateBeatDisplay();
     };
 
@@ -547,8 +560,6 @@ function init() {
 
         Tapping on 't' 5 times in a new tempo will change the
         metronome's rate.
-
-        TODO: make this practical on mobile
     */
     mute.onclick = toggleSound;
 
