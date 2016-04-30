@@ -44,6 +44,7 @@ var MM_DEFAULT = 60;
 var MM_MIN = 1;
 var MM_MAX = 250;
 var BEAT_COUNT_DEFAULT = 4;
+var TAP_COUNT = 5;
 
 /**
     DATA STORAGE
@@ -565,20 +566,30 @@ function init() {
 
     function setTappedTempo(ev) {
         ev.preventDefault();
-        tempoTapperArray.push(audioCtx.currentTime);
-        var arrayLen = tempoTapperArray.length;
-        if (arrayLen == 5) {
-            var deltas = [];
-            for(var i = 1; i < arrayLen; i++) {
-                deltas.push(tempoTapperArray[i] - tempoTapperArray[i - 1]);
+        var tapTime = audioCtx.currentTime;
+        /**
+            If there have been more than four seconds since the
+            last "tap," assume that previous sequence has been
+            left incomplete and begin anew.
+        */
+        if (tempoTapperArray &&
+            tapTime - tempoTapperArray[tempoTapperArray.length - 1] > 4) {
+            tempoTapperArray = [tapTime];
+        } else {
+            tempoTapperArray.push(tapTime);
+            if (tempoTapperArray.length == TAP_COUNT) {
+                var deltas = [];
+                for(var i = 1; i < TAP_COUNT; i++) {
+                    deltas.push(tempoTapperArray[i] - tempoTapperArray[i - 1]);
+                }
+                var avg = deltas.reduce(function (a, b) {
+                    return a + b;
+                }) / (TAP_COUNT - 1);
+                inputBox.value = Math.round(60 / avg);
+                setSecondsPerBeat();
+                handleRateChange = true;
+                tempoTapperArray = [];
             }
-            var avg = deltas.reduce(function (a, b) {
-                return a + b;
-            }) / deltas.length;
-            inputBox.value = Math.round(60 / avg);
-            setSecondsPerBeat();
-            handleRateChange = true;
-            tempoTapperArray = [];
         }
     }
 
