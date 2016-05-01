@@ -18,6 +18,15 @@ button {
     padding: 0.25em
 }
 
+#metronome {
+    width: 11em;
+    padding: 1.5em;
+    margin: 0 auto;
+    border-radius: 1em;
+    background-color: #35333c;
+    color: #d4b22f;
+}
+
 /* Introduced so input element doesn't shift */
 #input-container {
     width: 100%;
@@ -43,30 +52,6 @@ button {
     justify-content: center;
 }
 
-.mute-button {
-    float: right;
-    /* https://commons.wikimedia.org/wiki/File:Speaker_Icon.svg */
-    background-image: url(../images/Speaker_Icon.svg);
-    background-size: 100%;
-    height: 1.5em;
-    width: 1.5em;
-    vertical-align: middle;
-}
-
-.muted {
-    /* https://commons.wikimedia.org/wiki/File:Mute_Icon.svg */
-    background-image: url(../images/Mute_Icon.svg);
-}
-
-#metronome {
-    width: 11em;
-    padding: 1.5em;
-    margin: 0 auto;
-    border-radius: 1em;
-    background-color: #35333c;
-    color: #d4b22f;
-}
-
 #start-stop-buttons,
 #subdivide-mute-buttons {
     width: 85%;
@@ -86,6 +71,21 @@ button {
 #subdivide-button {
     font-size: 1em;
     float: left;
+}
+
+.mute-button {
+    float: right;
+    /* https://commons.wikimedia.org/wiki/File:Speaker_Icon.svg */
+    background-image: url(../images/Speaker_Icon.svg);
+    background-size: 100%;
+    height: 1.5em;
+    width: 1.5em;
+    vertical-align: middle;
+}
+
+.muted {
+    /* https://commons.wikimedia.org/wiki/File:Mute_Icon.svg */
+    background-image: url(../images/Mute_Icon.svg);
 }
 
 #subdivide-mute-buttons:after,
