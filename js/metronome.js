@@ -44,7 +44,7 @@ var MM_DEFAULT = 60;
 var MM_MIN = 1;
 var MM_MAX = 250;
 var BEAT_COUNT_DEFAULT = 4;
-var TAP_COUNT = 5;
+var TAPS_TO_SET_TEMPO = 5;
 
 /**
     DATA STORAGE
@@ -237,6 +237,10 @@ function init() {
     var visualBeats = document.getElementsByClassName('visualbeat');
     var previousBeat = visualBeats.length - 1,
         beat;
+    // TODO: create option, default will be false
+    var accentDownbeat = true;
+    // TODO: create option
+    //var accentSecondary = false;
     // default = no subdivision
     var division = 1;
     var playSubdivisions = false;
@@ -452,7 +456,8 @@ function init() {
 
                 newNoteEntry = pattern[whereInPattern];
                 newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
-                scheduleSound(newNoteEntry[0], newNoteTime, 1.0);
+                var gain = (beat === 0 && whereInPattern === 0 && accentDownbeat) ? 3.0 : 1.0;
+                scheduleSound(newNoteEntry[0], newNoteTime, gain);
 
                 if (countJustBegun) {
                     countJustBegun = false;
@@ -577,14 +582,14 @@ function init() {
             tempoTapperArray = [tapTime];
         } else {
             tempoTapperArray.push(tapTime);
-            if (tempoTapperArray.length == TAP_COUNT) {
+            if (tempoTapperArray.length == TAPS_TO_SET_TEMPO) {
                 var deltas = [];
-                for(var i = 1; i < TAP_COUNT; i++) {
+                for(var i = 1; i < TAPS_TO_SET_TEMPO; i++) {
                     deltas.push(tempoTapperArray[i] - tempoTapperArray[i - 1]);
                 }
                 var avg = deltas.reduce(function (a, b) {
                     return a + b;
-                }) / (TAP_COUNT - 1);
+                }) / (TAPS_TO_SET_TEMPO - 1);
                 inputBox.value = Math.round(60 / avg);
                 setSecondsPerBeat();
                 handleRateChange = true;
