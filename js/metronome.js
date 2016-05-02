@@ -14,7 +14,8 @@
 */
 
 try {
-    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    var audioCtx = new window.AudioContext();
 } catch (e) {
     alert('Web Audio API support required.');
 }
@@ -22,8 +23,8 @@ try {
 /**
     DOM selectors
 */
-
-var metronome = document.getElementById('metronome'),
+var sideMenuToggle = document.getElementById('side-menu-toggle'),
+    downbeatAccentToggle = document.getElementById('downbeat-accent-toggle'),
     on = document.getElementById('start-button'),
     off = document.getElementById('stop-button'),
     inputBox = document.querySelector('input'),
@@ -36,15 +37,23 @@ var metronome = document.getElementById('metronome'),
     mute = document.getElementById('mute');
 
 /**
+    Show/hide options menu.
+*/
+sideMenuToggle.onclick = function(ev) {
+     //ev.preventDefault();
+     this.parentNode.classList.toggle('show-side-menu');
+};
+
+/**
     Default settings
 */
-
-var MUTED_DEFAULT = false;
-var MM_DEFAULT = 60;
-var MM_MIN = 1;
-var MM_MAX = 250;
-var BEAT_COUNT_DEFAULT = 4;
-var TAPS_TO_SET_TEMPO = 5;
+var MUTED_DEFAULT = false,
+    MM_DEFAULT = 60,
+    MM_MIN = 1,
+    MM_MAX = 250,
+    BEAT_COUNT_DEFAULT = 4,
+    TAPS_TO_SET_TEMPO = 5,
+    ACCENT_DOWNBEAT = false;
 
 /**
     DATA STORAGE
@@ -140,6 +149,13 @@ var numberOfBeats = manageStoredVariable('numberOfBeats', BEAT_COUNT_DEFAULT);
 beatCount[numberOfBeats - 2].setAttribute('selected', true);
 
 /**
+    Initial accent downbeat
+*/
+var accentDownbeat = manageStoredVariable('accentDownbeat', ACCENT_DOWNBEAT);
+
+downbeatAccentToggle.checked = accentDownbeat;
+
+/**
     LOAD SOUNDS
 
     Retrieve sounds and store decoded data in soundLibrary object
@@ -164,7 +180,7 @@ var soundFiles = {
 };
 
 function loadSound(key, url) {
-    var fileCount = soundFiles.length;
+    var fileCount = Object.keys(soundFiles).length;
     var req = new XMLHttpRequest();
     req.open('GET', url);
     req.responseType = 'arraybuffer';
@@ -173,7 +189,7 @@ function loadSound(key, url) {
             audioCtx.decodeAudioData(req.response, function (buffer) {
                 soundLibrary[key] = buffer;
                 // we assume that one file will be processed last...
-                if (soundLibrary.length == fileCount) {
+                if (Object.keys(soundLibrary).length == fileCount) {
                     init();
                 }
             });
@@ -186,7 +202,7 @@ function loadSound(key, url) {
                 other slot.
             */
             soundLibrary[key] = false;
-            if (soundLibrary.length == fileCount) {
+            if (Object.keys(soundLibrary).length == fileCount) {
                 init();
             }
         }
@@ -237,8 +253,6 @@ function init() {
     var visualBeats = document.getElementsByClassName('visualbeat');
     var previousBeat = visualBeats.length - 1,
         beat;
-    // TODO: create option, default will be false
-    var accentDownbeat = true;
     // TODO: create option
     //var accentSecondary = false;
     // default = no subdivision
@@ -513,6 +527,13 @@ function init() {
     inputBox.onchange = function() {
         setSecondsPerBeat();
         handleRateChange = true;
+    };
+
+    downbeatAccentToggle.onchange = function() {
+        accentDownbeat = this.checked;
+        if (haveLocalStorage) {
+            localStorage.setItem('accentDownbeat', JSON.stringify(accentDownbeat));
+        }
     };
 
     /**

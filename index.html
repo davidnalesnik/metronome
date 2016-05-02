@@ -9,7 +9,19 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <br>
+        <div class="side-menu">
+            <ul>
+                <li>
+                    Accent downbeats:
+                    <input id="downbeat-accent-toggle" type="checkbox">
+                </li>
+                <li>
+                    Hide beat display:
+                    <input id="beat-visibility-toggle" type="checkbox">
+                </li>
+            </ul>
+            <span id="side-menu-toggle"></span>
+        </div>
         <div id="metronome">
             <h1>Metronome</h1>
             <div id="input-container">
@@ -25,7 +37,7 @@
                 <button class="mute-button" id="mute"></button>
             </div>
             <div id="beat-bubbles"></div>
-            <div id="options">
+            <div id="beat-options">
                 Number of beats:
                 <select id="beat-count">
                     <option value="2">2</option>
