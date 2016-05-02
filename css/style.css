@@ -143,6 +143,10 @@ li {
     margin-top: 1.5em;
 }
 
+.hide-beats {
+    display: none;
+}
+
 .visualbeat {
     height: 1em;
     width: 1em;

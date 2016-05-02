@@ -25,6 +25,7 @@ try {
 */
 var sideMenuToggle = document.getElementById('side-menu-toggle'),
     downbeatAccentToggle = document.getElementById('downbeat-accent-toggle'),
+    beatVisibilityToggle = document.getElementById('beat-visibility-toggle'),
     on = document.getElementById('start-button'),
     off = document.getElementById('stop-button'),
     inputBox = document.querySelector('input'),
@@ -53,7 +54,8 @@ var MUTED_DEFAULT = false,
     MM_MAX = 250,
     BEAT_COUNT_DEFAULT = 4,
     TAPS_TO_SET_TEMPO = 5,
-    ACCENT_DOWNBEAT = false;
+    ACCENT_DOWNBEAT = false,
+    BEAT_VISIBLE = true;
 
 /**
     DATA STORAGE
@@ -84,11 +86,13 @@ function storageAvailable(type) {
 var haveLocalStorage = storageAvailable('localStorage');
 
 /**
-    Function used to initialize a variable taking into account local
-    browser storage.  Will write to local storage if target property
-    doesn't exist.
+    Used at the beginning of a session for managing a variable
+    that may be in storage.
+
+    Since the function returns a value, it may be used as an
+    initializer.
 */
-function manageStoredVariable(name, val) {
+function initializeStoredVariable(name, val) {
     if (haveLocalStorage) {
         var setting = localStorage.getItem(name);
         if (setting) {
@@ -100,11 +104,10 @@ function manageStoredVariable(name, val) {
 }
 
 /**
-    Function to initialize attributes of DOM elements taking into account
-    local browser storage.  Will write to local storage if target property
-    doesn't exist.
+    Used at the beginning of a session for setting DOM attributes to
+    values that may be in storage.
 */
-function manageStoredProperty(elt, name, prop, val) {
+function initializeStorableProperty(elt, name, prop, val) {
     if (haveLocalStorage) {
         var setting = localStorage.getItem(name);
         if (setting) {
@@ -122,7 +125,7 @@ function manageStoredProperty(elt, name, prop, val) {
     Initial mute/unmute
 */
 
-var muted = manageStoredVariable('muted', MUTED_DEFAULT);
+var muted = initializeStoredVariable('muted', MUTED_DEFAULT);
 
 function updateMuteButtonDisplay() {
     var list = mute.classList;
@@ -139,21 +142,32 @@ updateMuteButtonDisplay();
 /**
     Initial tempo
 */
-manageStoredProperty(bpm, 'bpm', 'value', MM_DEFAULT);
+initializeStorableProperty(bpm, 'bpm', 'value', MM_DEFAULT);
 
 /**
     Initial beat count
 */
-var numberOfBeats = manageStoredVariable('numberOfBeats', BEAT_COUNT_DEFAULT);
+var numberOfBeats = initializeStoredVariable('numberOfBeats', BEAT_COUNT_DEFAULT);
 
 beatCount[numberOfBeats - 2].setAttribute('selected', true);
 
 /**
     Initial accent downbeat
 */
-var accentDownbeat = manageStoredVariable('accentDownbeat', ACCENT_DOWNBEAT);
+var accentDownbeat = initializeStoredVariable('accentDownbeat', ACCENT_DOWNBEAT);
 
 downbeatAccentToggle.checked = accentDownbeat;
+
+/**
+    Initial beat visibility
+*/
+var beatVisible = initializeStoredVariable('beatVisible', BEAT_VISIBLE);
+
+beatVisibilityToggle.checked = beatVisible;
+
+if (!beatVisible) {
+    beatBubbles.classList.add('hide-beats');
+}
 
 /**
     LOAD SOUNDS
@@ -529,10 +543,24 @@ function init() {
         handleRateChange = true;
     };
 
+    /**
+        OPTIONS
+    */
+
+    // Downbeat accent
     downbeatAccentToggle.onchange = function() {
         accentDownbeat = this.checked;
         if (haveLocalStorage) {
             localStorage.setItem('accentDownbeat', JSON.stringify(accentDownbeat));
+        }
+    };
+
+    // Show beats
+    beatVisibilityToggle.onchange = function() {
+        beatVisible = this.checked;
+        beatBubbles.classList.toggle('hide-beats');
+        if (haveLocalStorage) {
+            localStorage.setItem('beatVisible', JSON.stringify(beatVisible));
         }
     };
 
