@@ -2,8 +2,6 @@
     TODO:
     - collect more sounds
     - provide mechanism for choosing sounds
-    - add sliding settings menu
-    - allow visuals to be turned off
     - metric accentuation
     - remember more settings between sessions (meter, sound
     assignments)
@@ -123,20 +121,11 @@ function initializeStorableProperty(elt, name, prop, val) {
 /**
     Initial mute/unmute
 */
-
 var muted = initializeStoredVariable('muted', MUTED_DEFAULT);
 
-function updateMuteButtonDisplay() {
-    var list = mute.classList;
-    var hasMutedClass = list.contains('muted');
-    if (muted && !hasMutedClass) {
-        list.add('muted');
-    } else if (!muted && hasMutedClass) {
-        list.remove('muted');
-    }
+if (muted) {
+    mute.classList.add('muted');
 }
-
-updateMuteButtonDisplay();
 
 /**
     Initial tempo
@@ -320,7 +309,7 @@ function init() {
         if (haveLocalStorage) {
             localStorage.setItem('muted', JSON.stringify(muted));
         }
-        updateMuteButtonDisplay();
+        mute.classList.toggle('muted');
         // So spacebar can be used right after mouseclick
         mute.blur();
     }
