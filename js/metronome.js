@@ -57,10 +57,17 @@ var MUTED_DEFAULT = false,
 /**
     DATA STORAGE
 
-    Settings persist between sessions.  Currently, this is limited to
-    whether sound is muted or not, the tempo, and the number of beats
-    displayed.  If the browser does not support the Web Storage API, we
-    will use default values.
+    If possible, settings persist between sessions.
+
+    We remember the following:
+     - whether sound is muted,
+     - the tempo,
+     - the number of beats,
+     - whether beats are displayed,
+     - and whether downbeats are accented.
+
+    If the browser does not support the Web Storage API, we will
+    use default values.
 */
 
 /**
@@ -81,6 +88,14 @@ function storageAvailable(type) {
 }
 
 var haveLocalStorage = storageAvailable('localStorage');
+// for testing:
+//haveLocalStorage = false;
+
+function setStoredVariable(name, val) {
+    if (haveLocalStorage) {
+        localStorage.setItem(name, JSON.stringify(val));
+    }
+}
 
 /**
     Used at the beginning of a session for managing a variable
@@ -95,7 +110,7 @@ function initializeStoredVariable(name, val) {
         if (setting) {
             return JSON.parse(setting);
         }
-        localStorage.setItem(name, val);
+        setStoredVariable(name, val);
     }
     return val;
 }
@@ -306,12 +321,10 @@ function init() {
 
     function toggleSound() {
         muted = !muted;
-        if (haveLocalStorage) {
-            localStorage.setItem('muted', JSON.stringify(muted));
-        }
         mute.classList.toggle('muted');
         // So spacebar can be used right after mouseclick
         mute.blur();
+        setStoredVariable('muted', muted);
     }
 
     /**
@@ -379,9 +392,7 @@ function init() {
                 removeBeatBubble();
             }
         }
-        if (haveLocalStorage) {
-            localStorage.setItem('numberOfBeats', JSON.stringify(vbsRequested));
-        }
+        setStoredVariable('numberOfBeats', vbsRequested);
     }
 
     /**
@@ -538,18 +549,14 @@ function init() {
     // Downbeat accent
     downbeatAccentToggle.onchange = function() {
         accentDownbeat = this.checked;
-        if (haveLocalStorage) {
-            localStorage.setItem('accentDownbeat', JSON.stringify(accentDownbeat));
-        }
+        setStoredVariable('accentDownbeat', accentDownbeat);
     };
 
     // Show beats
     beatVisibilityToggle.onchange = function() {
         beatVisible = this.checked;
         beatBubbles.classList.toggle('hide-beats');
-        if (haveLocalStorage) {
-            localStorage.setItem('beatVisible', JSON.stringify(beatVisible));
-        }
+        setStoredVariable('beatVisible', beatVisible);
     };
 
     /**
