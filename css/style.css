@@ -54,7 +54,11 @@ li {
     width: 12em;
     z-index: 1;
     background-color: #e2c39e;
+    -ms-transform: translateX(-12em);
+    -webkit-transform: translateX(-12em);
     transform: translateX(-12em);
+    transition: -ms-transform 500ms ease-in-out;
+    transition: -webkit-transform 500ms ease-in-out;
     transition: transform 500ms ease-in-out;
 }
 
@@ -73,6 +77,16 @@ li {
 
 #side-menu-toggle img {
     width: 80%;
+    -ms-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+    transition: -ms-transform 500ms ease-in-out;
+    transition: -webkit-transform 500ms ease-in-out;
+    transition: transform 500ms ease-in-out;
+}
+
+.show-side-menu #side-menu-toggle img {
+    transform: rotate(180deg);
 }
 
 #metronome {
