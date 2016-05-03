@@ -28,7 +28,6 @@ var sideMenuToggle = document.getElementById('side-menu-toggle'),
     beatVisibilityToggle = document.getElementById('beat-visibility-toggle'),
     on = document.getElementById('start-button'),
     off = document.getElementById('stop-button'),
-    inputBox = document.querySelector('input'),
     tempoTapTarget = document.getElementById('tempo-tap-target'),
     subdivide = document.getElementById('subdivide-button'),
     divisions = document.getElementById('divisions'),
@@ -538,7 +537,7 @@ function init() {
     /**
         Set a new speed.
     */
-    inputBox.onchange = function() {
+    bpm.onchange = function() {
         setSecondsPerBeat();
         handleRateChange = true;
     };
@@ -639,7 +638,7 @@ function init() {
                 var avg = deltas.reduce(function (a, b) {
                     return a + b;
                 }) / (TAPS_TO_SET_TEMPO - 1);
-                inputBox.value = Math.round(60 / avg);
+                bpm.value = Math.round(60 / avg);
                 setSecondsPerBeat();
                 handleRateChange = true;
                 tempoTapperArray = [];
