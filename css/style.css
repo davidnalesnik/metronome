@@ -68,8 +68,11 @@ li {
     right: -2em;
     height: 2em;
     width: 2em;
-    font-weight: 600;
     background-color: #e2c39e;
+}
+
+#side-menu-toggle img {
+    width: 80%;
 }
 
 #metronome {
