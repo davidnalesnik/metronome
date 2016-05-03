@@ -191,8 +191,8 @@ if (!beatVisible) {
 var soundLibrary = {};
 
 var soundFiles = {
-    tock: 'metronome_sound.mp3',
-    harshBeep: 'Beep.mp3',
+    tock: 'sounds/metronome_sound.mp3',
+    harshBeep: 'sounds/Beep.mp3',
     harshBeepCopy: 'beepcopy.mp3'
 };
 
