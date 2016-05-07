@@ -483,6 +483,13 @@ function init() {
 
                 newNoteEntry = pattern[whereInPattern];
                 newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
+                /**
+                    No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
+                    0-1 have obvious effect, but values > 1 don't seem to
+                    increase the volume at all.  Very high values distort
+                    sound.  Possibly there should be an option to use a
+                    different sound as an accent?
+                */
                 var gain = (beat === 0 && whereInPattern === 0 && accentDownbeat) ? 3.0 : 1.0;
                 scheduleSound(newNoteEntry[0], newNoteTime, gain);
 
@@ -501,6 +508,16 @@ function init() {
     /************************ EVENT HANDLERS **************************/
 
     on.onclick = function() {
+        /**
+            This is necessary on Safari(tested on iPhone 5S, iOS 9.3.1).
+            See https://bugs.chromium.org/p/chromium/issues/detail?id=159359
+            audioCtx.currentTime stays locked at 0 until some API call
+            is made, so we make a dummy gainNode here.
+
+            Also, it seems we need to do this in response to a user
+            event, hence placement in event handler.
+        */
+        audioCtx.createGain();
         setSecondsPerBeat();
         /**
             We only honor the first click of start button.  While count
@@ -659,10 +676,10 @@ function init() {
 }
 
 function scheduleSound(buffer, time, gain) {
-    var bufferSource = audioCtx.createBufferSource();
-    bufferSource.buffer = buffer;
     var gainNode = audioCtx.createGain();
     gainNode.gain.value = (muted) ? 0.0 : gain;
+    var bufferSource = audioCtx.createBufferSource();
+    bufferSource.buffer = buffer;
     bufferSource.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     bufferSource.start(time);
