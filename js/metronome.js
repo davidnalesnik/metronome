@@ -24,6 +24,7 @@ try {
 var sideMenuToggle = document.getElementById('side-menu-toggle'),
     downbeatAccentToggle = document.getElementById('downbeat-accent-toggle'),
     beatVisibilityToggle = document.getElementById('beat-visibility-toggle'),
+    metricAccentToggles = document.getElementById('metric-accent-toggles'),
     on = document.getElementById('start-button'),
     off = document.getElementById('stop-button'),
     tempoTapTarget = document.getElementById('tempo-tap-target'),
@@ -239,6 +240,8 @@ for (var key in soundFiles) {
 function init() {
     // Create DOM elements for beat display.
     updateBeatDisplay();
+    // Create DOM elements for accented beat selector
+    updateAccentedBeatToggles();
     // assign sounds
     var beatBuffer = soundLibrary.tock;
     var subdivisionBuffer = soundLibrary.harshBeepCopy;
@@ -380,19 +383,44 @@ function init() {
         Add or remove beat bubbles when a new size is selected.
     */
     function updateBeatDisplay() {
-        var vbs = document.getElementsByClassName('beat-bubble');
-        var vbsCount = vbs.length;
-        var vbsRequested = beatCount.value;
-        if (vbsCount < vbsRequested) {
-            for (var i = 0; i < vbsRequested - vbsCount; i++) {
+        var beatsDrawn = document.getElementsByClassName('beat-bubble');
+        var beatsDrawnCount = beatsDrawn.length;
+        if (beatsDrawnCount < numberOfBeats) {
+            for (var i = 0; i < numberOfBeats - beatsDrawnCount; i++) {
                 addBeatBubble();
             }
-        } else if (vbsCount > vbsRequested) {
-            for (var j = 0; j < vbsCount - vbsRequested; j++) {
+        } else if (beatsDrawnCount > numberOfBeats) {
+            for (var j = 0; j < beatsDrawnCount - numberOfBeats; j++) {
                 removeBeatBubble();
             }
         }
-        setStoredVariable('numberOfBeats', vbsRequested);
+    }
+
+    function updateAccentedBeatToggles() {
+        metricAccentToggles.innerHTML = '';
+        var accentToggle;
+        for(var i = 0; i < numberOfBeats; i++) {
+            accentToggle = document.createElement('input');
+            accentToggle.setAttribute('type', 'checkbox');
+            if (i === 0) {
+                accentToggle.onchange = function() {
+                    accentDownbeat = this.checked;
+                    downbeatAccentToggle.checked = accentDownbeat;
+                };
+                if (accentDownbeat) {
+                    accentToggle.setAttribute('checked', true);
+                }
+            }
+            accentToggle.setAttribute('id', i);
+            accentToggle.setAttribute('value', i);
+            metricAccentToggles.appendChild(accentToggle);
+        }
+    }
+
+    function isBeatAccented(beat) {
+        // beat doesn't actually need to be parameter, but let's be safe
+        return (beat === 0 && accentDownbeat) ||
+        document.getElementById(beat).checked;
     }
 
     /**
@@ -484,13 +512,16 @@ function init() {
                 newNoteEntry = pattern[whereInPattern];
                 newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
                 /**
+                    Select volumn of note based on accent pattern.
+
                     No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
                     0-1 have obvious effect, but values > 1 don't seem to
                     increase the volume at all.  Very high values distort
                     sound.  Possibly there should be an option to use a
                     different sound as an accent?
                 */
-                var gain = (beat === 0 && whereInPattern === 0 && accentDownbeat) ? 3.0 : 1.0;
+                var gain = ((whereInPattern === 0) &&
+                ((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : 1.0;
                 scheduleSound(newNoteEntry[0], newNoteTime, gain);
 
                 if (countJustBegun) {
@@ -567,6 +598,8 @@ function init() {
     downbeatAccentToggle.onchange = function() {
         accentDownbeat = this.checked;
         setStoredVariable('accentDownbeat', accentDownbeat);
+        // update metrical accent selector
+        document.getElementById('0').checked = accentDownbeat;
     };
 
     // Show beats
@@ -612,7 +645,10 @@ function init() {
         if (beat > this.value - 1) {
             beat = 0;
         }
+        numberOfBeats = beatCount.value;
+        setStoredVariable('numberOfBeats', numberOfBeats);
         updateBeatDisplay();
+        updateAccentedBeatToggles();
     };
 
     /**
