@@ -113,10 +113,22 @@ ul {
 }
 
 .menu-options {
+    margin-top: 2em;
 }
 
 .menu-option {
-    line-height: 4em;
+    margin-bottom: 4em;
+}
+
+.beat-label {
+    margin: 1em;
+    float: left;
+}
+
+.beat-label input {
+    display: block;
+    margin: 0 auto;
+    margin-top: 0.25em;
 }
 
 /************************* METRONOME ***********************/

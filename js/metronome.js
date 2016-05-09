@@ -398,8 +398,11 @@ function init() {
 
     function updateAccentedBeatToggles() {
         metricAccentToggles.innerHTML = '';
-        var accentToggle;
+        var td, accentToggle, label;
         for(var i = 0; i < numberOfBeats; i++) {
+            label = document.createElement('label');
+            label.setAttribute('class', 'beat-label');
+            label.innerHTML = i + 1;
             accentToggle = document.createElement('input');
             accentToggle.setAttribute('type', 'checkbox');
             if (i === 0) {
@@ -413,7 +416,8 @@ function init() {
             }
             accentToggle.setAttribute('id', i);
             accentToggle.setAttribute('value', i);
-            metricAccentToggles.appendChild(accentToggle);
+            label.appendChild(accentToggle);
+            metricAccentToggles.appendChild(label);
         }
     }
 
