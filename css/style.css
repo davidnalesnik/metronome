@@ -66,6 +66,8 @@ ul {
     justify-content: center;
 }
 
+/********************** SIDE MENU **********************/
+
 .side-menu {
     position: fixed;
     top: 0;
@@ -117,6 +119,8 @@ ul {
     line-height: 4em;
 }
 
+/************************* METRONOME ***********************/
+
 #metronome {
     width: 14em;
     padding: 2.0em 1.5em;
@@ -126,11 +130,11 @@ ul {
     color: #d4b22f;
 }
 
-#input-container {
+#tempo-container {
     width: 11em;
 }
 
-#bpm {
+#tempo-input {
     width: 60%;
     float: left;
 }
@@ -181,7 +185,7 @@ ul {
 }
 
 #subdivide-mute-buttons:after,
-#input-container:after {
+#tempo-container:after {
     clear: both;
     content: "";
     display: table;
@@ -191,11 +195,7 @@ ul {
     margin-top: 1.5em;
 }
 
-.hide-beats {
-    display: none;
-}
-
-.visualbeat {
+.beat-bubble {
     height: 1em;
     width: 1em;
     display: inline-block;
@@ -205,15 +205,15 @@ ul {
     background-color: white;
 }
 
-.show {
-    background-color: red;
-}
-
 #beat-options {
 }
 
 .beat-option {
     padding-top: 1em;
+}
+
+.hide-beat-bubbles {
+    display: none;
 }
 
 /********************** MEDIA QUERIES ***********************/

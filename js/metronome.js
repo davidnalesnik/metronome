@@ -31,7 +31,7 @@ var sideMenuToggle = document.getElementById('side-menu-toggle'),
     divisions = document.getElementById('divisions'),
     beatBubbles = document.getElementById('beat-bubbles'),
     beatCount = document.getElementById('beat-count'),
-    bpm = document.getElementById('bpm'),
+    bpm = document.getElementById('tempo-input'),
     mute = document.getElementById('mute');
 
 /**
@@ -169,7 +169,7 @@ var beatVisible = initializeStoredVariable('beatVisible', BEAT_VISIBLE);
 beatVisibilityToggle.checked = beatVisible;
 
 if (!beatVisible) {
-    beatBubbles.classList.add('hide-beats');
+    beatBubbles.classList.add('hide-beat-bubbles');
 }
 
 /**
@@ -267,7 +267,7 @@ function init() {
     */
     var startOffset = 0.4;
     var whereInPattern;
-    var visualBeats = document.getElementsByClassName('visualbeat');
+    var visualBeats = document.getElementsByClassName('beat-bubble');
     var previousBeat = visualBeats.length - 1,
         beat;
     // TODO: create option
@@ -369,7 +369,7 @@ function init() {
 
     function addBeatBubble() {
         var newBubble = document.createElement('div');
-        newBubble.setAttribute('class', 'visualbeat');
+        newBubble.setAttribute('class', 'beat-bubble');
         beatBubbles.appendChild(newBubble);
     }
 
@@ -380,7 +380,7 @@ function init() {
         Add or remove beat bubbles when a new size is selected.
     */
     function updateBeatDisplay() {
-        var vbs = document.getElementsByClassName('visualbeat');
+        var vbs = document.getElementsByClassName('beat-bubble');
         var vbsCount = vbs.length;
         var vbsRequested = beatCount.value;
         if (vbsCount < vbsRequested) {
@@ -572,7 +572,7 @@ function init() {
     // Show beats
     beatVisibilityToggle.onchange = function() {
         beatVisible = this.checked;
-        beatBubbles.classList.toggle('hide-beats');
+        beatBubbles.classList.toggle('hide-beat-bubbles');
         setStoredVariable('beatVisible', beatVisible);
     };
 
