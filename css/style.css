@@ -7,6 +7,19 @@
     red -- red
 */
 
+/* https://css-tricks.com/box-sizing/ */
+html {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    -webkit-box-sizing: inherit;
+    -moz-box-sizing: inherit;
+    box-sizing: inherit;
+}
+
 body {
     font-size: 12pt;
     font-family: sans-serif;
@@ -16,6 +29,7 @@ body {
 
 h1 {
     text-align: center;
+    margin: 0 0 1em;
 }
 
 input {
@@ -26,17 +40,22 @@ input {
 button {
     font-size: 1.4em;
     padding: 0.25em;
+    /**
+        We remove Safari's rounded protruding corners because they
+        increase button size so that buttons won't fit on the same
+        line.  We lose a bit of formatting in the process.  As a
+        minimum, we set button coloring to the Chrome default.
+    */
+    -webkit-appearance: none;
+    background-color: rgb(221, 221, 221);
 }
 
 ul {
+    margin: 0;
     list-style-type: none;
-    padding: 0;
-    margin: 1em;
+    padding-left: 0.25em;
 }
 
-li {
-    line-height: 2em;
-}
 
 .center {
     display: -webkit-box;
@@ -52,12 +71,13 @@ li {
     top: 0;
     left: 0;
     height: 100%;
-    width: 12em;
+    width: 13em;
+    padding: 1em;
     z-index: 1;
     background-color: #e2c39e;
-    -ms-transform: translateX(-12em);
-    -webkit-transform: translateX(-12em);
-    transform: translateX(-12em);
+    -ms-transform: translateX(-13em);
+    -webkit-transform: translateX(-13em);
+    transform: translateX(-13em);
     transition: -ms-transform 500ms ease-in-out;
     transition: -webkit-transform 500ms ease-in-out;
     transition: transform 500ms ease-in-out;
@@ -90,18 +110,24 @@ li {
     transform: rotate(180deg);
 }
 
+.menu-options {
+}
+
+.menu-option {
+    line-height: 4em;
+}
+
 #metronome {
-    width: 11em;
-    padding: 1.5em;
+    width: 14em;
+    padding: 2.0em 1.5em;
     margin: 0 auto;
     border-radius: 1em;
     background-color: #35333c;
     color: #d4b22f;
 }
 
-/* Introduced so input element doesn't shift */
 #input-container {
-    width: 100%;
+    width: 11em;
 }
 
 #bpm {
@@ -112,16 +138,16 @@ li {
 #tempo-tap-target {
     float: right;
     background-color: #f3f3f3;
+    font-size: 2em;
     height: 1.5em;
     width: 1.5em;
     border-radius: 50%;
-    font-size: 2em;
 }
 
 #start-stop-buttons,
 #subdivide-mute-buttons {
-    width: 85%;
-    margin: 0 auto;
+    width: 11em;
+    padding: 0 0.825em;
     margin-top: 1.5em;
 }
 
@@ -184,8 +210,10 @@ li {
 }
 
 #beat-options {
-    margin-top: 1.5em;
-    line-height: 2em;
+}
+
+.beat-option {
+    padding-top: 1em;
 }
 
 /********************** MEDIA QUERIES ***********************/

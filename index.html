@@ -10,12 +10,12 @@
     </head>
     <body>
         <div class="side-menu">
-            <ul>
-                <li>
+            <ul class="menu-options">
+                <li class="menu-option">
                     Accent downbeats:
                     <input id="downbeat-accent-toggle" type="checkbox">
                 </li>
-                <li>
+                <li class="menu-option">
                     Show beat display:
                     <input id="beat-visibility-toggle" type="checkbox">
                 </li>
@@ -39,29 +39,33 @@
                 <button class="mute-button" id="mute"></button>
             </div>
             <div id="beat-bubbles"></div>
-            <div id="beat-options">
-                Number of beats:
-                <select id="beat-count">
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                    <option value="13">13</option>
-                </select>
-                Notes per beat:
-                <select id="divisions">
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                </select>
-            </div>
+            <ul id="beat-options">
+                <li class="beat-option">
+                    Beat count:
+                    <select id="beat-count">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                    </select>
+                </li>
+                <li class="beat-option">
+                    Beat division:
+                    <select id="divisions">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </li>
+            </ul>
         </div>
         <script src="js/metronome.js"></script>
     </body>
