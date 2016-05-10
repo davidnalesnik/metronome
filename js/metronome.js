@@ -176,7 +176,7 @@ var beatVisible = initializeStoredVariable('beatVisible', BEAT_VISIBLE);
 beatVisibilityToggle.checked = beatVisible;
 
 if (!beatVisible) {
-    beatBubbles.classList.add('hide-beat-bubbles');
+    beatBubbles.classList.add('hide');
 }
 
 /**
@@ -675,10 +675,26 @@ function init() {
     // Show beats
     beatVisibilityToggle.onchange = function() {
         beatVisible = this.checked;
-        beatBubbles.classList.toggle('hide-beat-bubbles');
+        beatBubbles.classList.toggle('hide');
         setStoredVariable('beatVisible', beatVisible);
     };
 
+    // Show/hide selected side-menu options
+    var collection = document.getElementsByClassName('click-to-hide');
+    /**
+        For simplicity, we assume that the element to hide is the
+        next one at the same level.  We could add a class 'hideable'
+        and look for that class among the parent's children if we ever
+        need to break the pattern.  Or, we could surround the hideable
+        element with <label></label> instead of <a></a>
+    */
+    function toggleOptionVisibility() {
+        this.nextElementSibling.classList.toggle('hide');
+    }
+
+    for (var i = 0; i < collection.length; i++) {
+        collection[i].onclick = toggleOptionVisibility;
+    }
     /**
         Subdivide
     */
