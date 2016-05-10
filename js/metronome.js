@@ -243,17 +243,17 @@ function init() {
     // Create DOM elements for accented beat selector
     updateAccentedBeatToggles();
     // assign sounds
-    var beatBuffer = soundLibrary.tock;
+    var defaultBuffer = soundLibrary.tock;
+    var downbeatAccentBuffer = soundLibrary.harshBeep;
+    var secondaryAccentBuffer = soundLibrary.harshBeep;
     var subdivisionBuffer = soundLibrary.harshBeepCopy;
     /**
-        An object storing sounds and their location within the pattern.
-        Location is expressed as a floating-point number between 0.0 and 1.0.
-        This will be multiplied by secondsPerBeat to give the offset in
-        seconds.
-
-        Syntax: [[buffer1, fraction1], [buffer2, fraction2]]
+        An array storing location of events within the repeating pattern
+        (a single beat or a beat and its subdivisions).  Location is expressed
+        as a floating-point number between 0.0 and 1.0.  This will be
+        multiplied by secondsPerBeat to give the offset in seconds.
     */
-    var pattern = [[beatBuffer, 0.0]];
+    var pattern = [0.0];
     /**
         Flags representing initiation and termination of a count.
     */
@@ -273,8 +273,7 @@ function init() {
     var visualBeats = document.getElementsByClassName('beat-bubble');
     var previousBeat = visualBeats.length - 1,
         beat;
-    // TODO: create option
-    //var accentSecondary = false;
+
     // default = no subdivision
     var division = 1;
     var playSubdivisions = false;
@@ -309,15 +308,15 @@ function init() {
     }
 
     function resetPattern() {
-        pattern = [[beatBuffer, 0.0]];
+        pattern = [0.0];
         whereInPattern = 0; // why needed? set to 0 in beepFunction ...
     }
 
     function updatePattern() {
         resetPattern();
         if (division > 1) {
-            for(var i = 1; i < division; i++) {
-                pattern.push([subdivisionBuffer, i * 1/division]);
+            for (var i = 1; i < division; i++) {
+                pattern.push(1/division);
             }
         }
     }
@@ -513,10 +512,9 @@ function init() {
                     whereInPattern++;
                 }
 
-                newNoteEntry = pattern[whereInPattern];
-                newNoteTime = patternStartTime + newNoteEntry[1] * patternSeconds;
+                newNoteTime = patternStartTime + pattern[whereInPattern] * patternSeconds;
                 /**
-                    Select volumn of note based on accent pattern.
+                    Select volume of note based on accent pattern.
 
                     No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
                     0-1 have obvious effect, but values > 1 don't seem to
@@ -524,9 +522,20 @@ function init() {
                     sound.  Possibly there should be an option to use a
                     different sound as an accent?
                 */
-                var gain = ((whereInPattern === 0) &&
-                ((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : 1.0;
-                scheduleSound(newNoteEntry[0], newNoteTime, gain);
+                //var gain = ((whereInPattern === 0) &&
+                //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : //1.0;
+                var currentBuffer;
+                if (whereInPattern === 0) {
+                    if (isBeatAccented(beat)) {
+                        currentBuffer = (beat === 0) ? downbeatAccentBuffer : secondaryAccentBuffer;
+                    } else {
+                        currentBuffer = defaultBuffer;
+                    }
+                } else {
+                    currentBuffer = subdivisionBuffer;
+                }
+
+                scheduleSound(currentBuffer, newNoteTime, 1.0);
 
                 if (countJustBegun) {
                     countJustBegun = false;
