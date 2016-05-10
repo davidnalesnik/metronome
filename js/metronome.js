@@ -53,7 +53,13 @@ var MUTED_DEFAULT = false,
     BEAT_COUNT_DEFAULT = 4,
     TAPS_TO_SET_TEMPO = 5,
     ACCENT_DOWNBEAT = false,
-    BEAT_VISIBLE = true;
+    BEAT_VISIBLE = true,
+    SOUND_ASSOCIATIONS_DEFAULT = {
+        'default-sound': 'tock',
+        'downbeat-sound': 'harshBeep',
+        'secondary-accent-sound': 'popCork',
+        'subdivision-sound': 'woodBlock'
+    };
 
 /**
     DATA STORAGE
@@ -174,6 +180,11 @@ if (!beatVisible) {
 }
 
 /**
+    Initial sound associations
+*/
+var soundAssociations = initializeStoredVariable('soundAssociations', SOUND_ASSOCIATIONS_DEFAULT);
+
+/**
     LOAD SOUNDS
 
     Retrieve sounds and store decoded data in soundLibrary object
@@ -244,12 +255,6 @@ function init() {
     // Create DOM elements for accented beat selector
     updateAccentedBeatToggles();
     // assign sounds
-    var soundAssociations = {
-        'default-sound': 'tock',
-        'downbeat-sound': 'harshBeep',
-        'secondary-accent-sound': 'popCork',
-        'subdivision-sound': 'woodBlock'
-    };
     populateSoundMenu();
 
     /**
@@ -310,6 +315,7 @@ function init() {
     */
     function registerSoundSelection() {
         soundAssociations[this.id] = this.options[this.selectedIndex].value;
+        setStoredVariable('soundAssociations', soundAssociations);
     }
 
     /**
