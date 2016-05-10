@@ -244,10 +244,14 @@ function init() {
     // Create DOM elements for accented beat selector
     updateAccentedBeatToggles();
     // assign sounds
-    var defaultBuffer = soundLibrary.tock;
-    var downbeatAccentBuffer = soundLibrary.harshBeep;
-    var secondaryAccentBuffer = soundLibrary.popCork;
-    var subdivisionBuffer = soundLibrary.woodBlock;
+    var soundAssociations = {
+        'default-sound': 'tock',
+        'downbeat-sound': 'harshBeep',
+        'secondary-accent-sound': 'popCork',
+        'subdivision-sound': 'woodBlock'
+    };
+    populateSoundMenu();
+
     /**
         An array storing location of events within the repeating pattern
         (a single beat or a beat and its subdivisions).  Location is expressed
@@ -299,6 +303,47 @@ function init() {
     var tempoTapperArray = [];
 
     /*************************** FUNCTIONS *****************************/
+
+    /**
+        Update soundAssociations object based on selection from the
+        sound menu.
+    */
+    function registerSoundSelection() {
+        soundAssociations[this.id] = this.options[this.selectedIndex].value;
+    }
+
+    /**
+        Build option lists for sound selection.  Select the default assignments
+        for each role: ordinary default beat, accented downbeat, accented
+        secondary beat, and subdivision.
+    */
+    function populateSoundMenu() {
+        var menuElements = document.getElementsByClassName('sound-menu-element');
+        var currentElement,
+            soundChoice,
+            toSelect;
+        for(var i = 0; i < menuElements.length; i++) {
+            currentElement = menuElements[i];
+            /**
+                IMPORTANT: DOM ids and soundAssociation keys MUST match for this
+                to work.  Possibly we ought to set ids from this object so there
+                is no chance for mistakes to occur.
+            */
+            toSelect = soundAssociations[currentElement.id];
+            for(var sound in soundFiles) {
+                if (soundFiles.hasOwnProperty(sound)) {
+                    soundChoice = document.createElement('option');
+                    soundChoice.innerHTML = sound;
+                    soundChoice.setAttribute('value', sound);
+                    if (sound == toSelect) {
+                        soundChoice.setAttribute('selected', 'selected');
+                    }
+                    currentElement.appendChild(soundChoice);
+                }
+            }
+            currentElement.onchange = registerSoundSelection;
+        }
+    }
 
     function setSecondsPerBeat() {
         var val = getNormalizedInput(bpm.value);
@@ -531,12 +576,14 @@ function init() {
                 var currentBuffer;
                 if (whereInPattern === 0) {
                     if (isBeatAccented(beat)) {
-                        currentBuffer = (beat === 0) ? downbeatAccentBuffer : secondaryAccentBuffer;
+                        currentBuffer = (beat === 0) ?
+                        soundLibrary[soundAssociations['downbeat-sound']] :
+                        soundLibrary[soundAssociations['secondary-accent-sound']];
                     } else {
-                        currentBuffer = defaultBuffer;
+                        currentBuffer = soundLibrary[soundAssociations['default-sound']];
                     }
                 } else {
-                    currentBuffer = subdivisionBuffer;
+                    currentBuffer = soundLibrary[soundAssociations['subdivision-sound']];
                 }
 
                 scheduleSound(currentBuffer, newNoteTime, 1.0);
