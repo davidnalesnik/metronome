@@ -194,7 +194,8 @@ var soundLibrary = {};
 var soundFiles = {
     tock: 'sounds/metronome_sound.mp3',
     harshBeep: 'sounds/Beep.mp3',
-    harshBeepCopy: 'beepcopy.mp3'
+    woodBlock: 'sounds/527.mp3',
+    popCork: 'sounds/pop-cork.mp3'
 };
 
 function loadSound(key, url) {
@@ -245,8 +246,8 @@ function init() {
     // assign sounds
     var defaultBuffer = soundLibrary.tock;
     var downbeatAccentBuffer = soundLibrary.harshBeep;
-    var secondaryAccentBuffer = soundLibrary.harshBeep;
-    var subdivisionBuffer = soundLibrary.harshBeepCopy;
+    var secondaryAccentBuffer = soundLibrary.popCork;
+    var subdivisionBuffer = soundLibrary.woodBlock;
     /**
         An array storing location of events within the repeating pattern
         (a single beat or a beat and its subdivisions).  Location is expressed
@@ -316,7 +317,7 @@ function init() {
         resetPattern();
         if (division > 1) {
             for (var i = 1; i < division; i++) {
-                pattern.push(1/division);
+                pattern.push(i/division);
             }
         }
     }
@@ -395,9 +396,15 @@ function init() {
         }
     }
 
+    function updateDownbeatAccent () {
+        accentDownbeat = this.checked;
+        downbeatAccentToggle.checked = accentDownbeat;
+    };
+
     function updateAccentedBeatToggles() {
         metricAccentToggles.innerHTML = '';
         var td, accentToggle, label;
+
         for(var i = 0; i < numberOfBeats; i++) {
             label = document.createElement('label');
             label.setAttribute('class', 'beat-label');
@@ -405,10 +412,7 @@ function init() {
             accentToggle = document.createElement('input');
             accentToggle.setAttribute('type', 'checkbox');
             if (i === 0) {
-                accentToggle.onchange = function() {
-                    accentDownbeat = this.checked;
-                    downbeatAccentToggle.checked = accentDownbeat;
-                };
+                accentToggle.onchange = updateDownbeatAccent;
                 if (accentDownbeat) {
                     accentToggle.setAttribute('checked', true);
                 }
