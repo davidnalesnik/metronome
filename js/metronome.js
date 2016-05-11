@@ -300,8 +300,7 @@ function init() {
     var patternSeconds,
         patternStartTime;
 
-    var newNoteEntry,
-        lastNoteTime,
+    var lastNoteTime,
         newNoteTime;
 
     var tempoTapperArray = [];
@@ -449,11 +448,11 @@ function init() {
     function updateDownbeatAccent () {
         accentDownbeat = this.checked;
         downbeatAccentToggle.checked = accentDownbeat;
-    };
+    }
 
     function updateAccentedBeatToggles() {
         metricAccentToggles.innerHTML = '';
-        var td, accentToggle, label;
+        var accentToggle, label;
 
         for(var i = 0; i < numberOfBeats; i++) {
             label = document.createElement('label');
@@ -478,6 +477,39 @@ function init() {
         // beat doesn't actually need to be parameter, but let's be safe
         return (beat === 0 && accentDownbeat) ||
         document.getElementById(beat).checked;
+    }
+
+    /**
+        Return a sound buffer based on metric assignments.
+    */
+    function getSoundBuffer() {
+        var soundBuffer;
+        if (whereInPattern === 0) {
+            if (isBeatAccented(beat)) {
+                soundBuffer = (beat === 0) ?
+                soundLibrary[soundAssociations['downbeat-sound']] :
+                soundLibrary[soundAssociations['secondary-accent-sound']];
+            } else {
+                soundBuffer = soundLibrary[soundAssociations['default-sound']];
+            }
+        } else {
+            soundBuffer = soundLibrary[soundAssociations['subdivision-sound']];
+        }
+        return soundBuffer;
+    }
+
+    /**
+        Advance beat and previousBeat.  (Beat is used to
+        fill in bubbles, previousBeat to clear them.)
+    */
+    function advanceBeat() {
+        if (beat === visualBeats.length - 1) {
+            previousBeat = visualBeats.length - 1;
+            beat = 0;
+        } else {
+            previousBeat = beat;
+            beat++;
+        }
     }
 
     /**
@@ -520,17 +552,10 @@ function init() {
             }
 
             /**
-                Advance beat and previousBeat.  (Beat is used to
-                fill in bubbles, previousBeat to clear them.)
+                Advance beat counters.
             */
             if (!endSignalled && whereInPattern == pattern.length - 1) {
-                if (beat === visualBeats.length - 1) {
-                    previousBeat = visualBeats.length - 1;
-                    beat = 0;
-                } else {
-                    previousBeat = beat;
-                    beat++;
-                }
+                advanceBeat();
             }
 
             if (endSignalled) {
@@ -578,18 +603,8 @@ function init() {
                 */
                 //var gain = ((whereInPattern === 0) &&
                 //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : //1.0;
-                var currentBuffer;
-                if (whereInPattern === 0) {
-                    if (isBeatAccented(beat)) {
-                        currentBuffer = (beat === 0) ?
-                        soundLibrary[soundAssociations['downbeat-sound']] :
-                        soundLibrary[soundAssociations['secondary-accent-sound']];
-                    } else {
-                        currentBuffer = soundLibrary[soundAssociations['default-sound']];
-                    }
-                } else {
-                    currentBuffer = soundLibrary[soundAssociations['subdivision-sound']];
-                }
+
+                var currentBuffer = getSoundBuffer();
 
                 scheduleSound(currentBuffer, newNoteTime, 1.0);
 
