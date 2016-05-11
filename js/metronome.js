@@ -483,19 +483,17 @@ function init() {
         Return a sound buffer based on metric assignments.
     */
     function getSoundBuffer() {
-        var soundBuffer;
-        if (whereInPattern === 0) {
-            if (isBeatAccented(beat)) {
-                soundBuffer = (beat === 0) ?
-                soundLibrary[soundAssociations['downbeat-sound']] :
-                soundLibrary[soundAssociations['secondary-accent-sound']];
-            } else {
-                soundBuffer = soundLibrary[soundAssociations['default-sound']];
-            }
-        } else {
-            soundBuffer = soundLibrary[soundAssociations['subdivision-sound']];
+        // subdivision
+        if (whereInPattern !== 0) {
+            return soundLibrary[soundAssociations['subdivision-sound']];
         }
-        return soundBuffer;
+        // ordinary beat
+        if (!isBeatAccented(beat)) {
+            return soundLibrary[soundAssociations['default-sound']];
+        }
+        // accented beats (downbeat, secondary)
+        return (beat === 0) ? soundLibrary[soundAssociations['downbeat-sound']] :
+        soundLibrary[soundAssociations['secondary-accent-sound']];
     }
 
     /**
