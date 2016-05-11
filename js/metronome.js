@@ -1,10 +1,9 @@
 /**
     TODO:
     - collect more sounds
-    - provide mechanism for choosing sounds
-    - metric accentuation
-    - remember more settings between sessions (meter, sound
-    assignments)
+    - remember more settings between sessions (meter, subdivision)
+    - handle unavailable sound files
+    - simplify beatFunction if possible
 */
 
 /**
