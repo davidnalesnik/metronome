@@ -30,7 +30,7 @@ var sideMenuToggle = document.getElementById('side-menu-toggle'),
     subdivide = document.getElementById('subdivide-button'),
     divisions = document.getElementById('divisions'),
     beatBubbles = document.getElementById('beat-bubbles'),
-    beatCount = document.getElementById('beat-count'),
+    beatCountSelect = document.getElementById('beat-count-select'),
     bpm = document.getElementById('tempo-input'),
     mute = document.getElementById('mute');
 
@@ -70,7 +70,8 @@ var MUTED_DEFAULT = false,
      - the tempo,
      - the number of beats,
      - whether beats are displayed,
-     - and whether downbeats are accented.
+     - whether downbeats are accented,
+     - and sound assignments.
 
     If the browser does not support the Web Storage API, we will
     use default values.
@@ -158,7 +159,7 @@ initializeStorableProperty(bpm, 'bpm', 'value', MM_DEFAULT);
 */
 var numberOfBeats = initializeStoredVariable('numberOfBeats', BEAT_COUNT_DEFAULT);
 
-beatCount[numberOfBeats - 2].setAttribute('selected', true);
+beatCountSelect[numberOfBeats - 2].setAttribute('selected', true);
 
 /**
     Initial accent downbeat
@@ -280,7 +281,7 @@ function init() {
     var startOffset = 0.4;
     var whereInPattern;
     var visualBeats = document.getElementsByClassName('beat-bubble');
-    var previousBeat = visualBeats.length - 1,
+    var previousBeat = numberOfBeats - 1,
         beat;
 
     // default = no subdivision
@@ -400,7 +401,7 @@ function init() {
             Somehow, it occasionally ends up being too large when
             downsizing...
         */
-        if (previousBeat < beatCount.value) {
+        if (previousBeat < numberOfBeats) {
             visualBeats[previousBeat].style.backgroundColor = 'white';
         }
         // Clear the last element when the count has stopped.
@@ -501,11 +502,10 @@ function init() {
         fill in bubbles, previousBeat to clear them.)
     */
     function advanceBeat() {
-        if (beat === visualBeats.length - 1) {
-            previousBeat = visualBeats.length - 1;
+        previousBeat = beat;
+        if (beat === numberOfBeats - 1) {
             beat = 0;
         } else {
-            previousBeat = beat;
             beat++;
         }
     }
@@ -643,7 +643,7 @@ function init() {
                 Set beat to last beat of count.  It will be incremented
                 to 0 when beepFunction is called.
             */
-            beat = visualBeats.length - 1;
+            beat = numberOfBeats - 1;
             patternSeconds = secondsPerBeat;
             patternStartTime = audioCtx.currentTime + startOffset;
             // set to -1 so beepFunction loop triggers immediately
@@ -732,7 +732,7 @@ function init() {
         }
     };
 
-    beatCount.onchange = function() {
+    beatCountSelect.onchange = function() {
         /**
             When decreasing the length of the measure, the current
             beat may be too large.  Resetting to zero (downbeat) is
@@ -743,7 +743,7 @@ function init() {
         if (beat > this.value - 1) {
             beat = 0;
         }
-        numberOfBeats = beatCount.value;
+        numberOfBeats = beatCountSelect.value;
         setStoredVariable('numberOfBeats', numberOfBeats);
         updateBeatDisplay();
         updateAccentedBeatToggles();
