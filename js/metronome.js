@@ -360,7 +360,7 @@ function init() {
 
     function resetPattern() {
         pattern = [0.0];
-        whereInPattern = 0; // why needed? set to 0 in beepFunction ...
+        //whereInPattern = 0; // why needed? set to 0 in beepFunction ...
     }
 
     function updatePattern() {
@@ -389,22 +389,25 @@ function init() {
         /**
             Show new beat.
 
-            Check: If endSignalled and we are on a subdivision other than last,
-            we don't want to show anything.  Instead we want to hold and
-            erase the current beat.
+            Check: If endSignalled and we are on a subdivision other than last, we don't want to show anything.  Instead we want to hold
+            and erase the current beat.
         */
         visualBeats[beat].style.backgroundColor = 'red';
         /**
             Hide the previous beat.
 
-            We shouldn't need to check previousBeat's value here.
-            Somehow, it occasionally ends up being too large when
-            downsizing...
+            We need to check previousBeat's value here.  If the number of
+            beats is reduced, previousBeat may be out-of-bounds.
         */
         if (previousBeat < numberOfBeats) {
             visualBeats[previousBeat].style.backgroundColor = 'white';
         }
-        // Clear the last element when the count has stopped.
+        /**
+            Clear the last element when the count has stopped.  It would
+            be nice to do this by continuing the animation frames, not
+            making a new red bubble and overwriting the last red bubble
+            with a white one.
+        */
         if (endSignalled) {
             /**
                 Keep a record of beat to clear.  This is done because
@@ -451,9 +454,12 @@ function init() {
     }
 
     function updateAccentedBeatToggles() {
+        /**
+            Right now, whenever we update we start with a blank
+            slate.  More efficent to add and subtract as needed.
+        */
         metricAccentToggles.innerHTML = '';
         var accentToggle, label;
-
         for(var i = 0; i < numberOfBeats; i++) {
             label = document.createElement('label');
             label.setAttribute('class', 'beat-label');
