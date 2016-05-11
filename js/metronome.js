@@ -30,6 +30,7 @@ var sideMenuToggle = document.getElementById('side-menu-toggle'),
     subdivide = document.getElementById('subdivide-button'),
     divisions = document.getElementById('divisions'),
     beatBubbles = document.getElementById('beat-bubbles'),
+    visualBeats = document.getElementsByClassName('beat-bubble'),
     beatCountSelect = document.getElementById('beat-count-select'),
     bpm = document.getElementById('tempo-input'),
     mute = document.getElementById('mute');
@@ -280,7 +281,6 @@ function init() {
     */
     var startOffset = 0.4;
     var whereInPattern;
-    var visualBeats = document.getElementsByClassName('beat-bubble');
     var previousBeat = numberOfBeats - 1,
         beat;
 
@@ -433,8 +433,7 @@ function init() {
         Add or remove beat bubbles when a new size is selected.
     */
     function updateBeatDisplay() {
-        var beatsDrawn = document.getElementsByClassName('beat-bubble');
-        var beatsDrawnCount = beatsDrawn.length;
+        var beatsDrawnCount = visualBeats.length;
         if (beatsDrawnCount < numberOfBeats) {
             for (var i = 0; i < numberOfBeats - beatsDrawnCount; i++) {
                 addBeatBubble();
