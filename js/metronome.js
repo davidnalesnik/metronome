@@ -269,7 +269,12 @@ function init() {
         Flags representing initiation and termination of a count.
     */
     var countJustBegun,
-        endSignalled;
+        endRequested;
+    /**
+        Flag representing final end of count.  (There is a wrap-up
+        after the user requests an end.)
+    */
+    var killLoop = false;
     /**
         Stores id for animation frame to control repetition/stop of count.
     */
@@ -360,7 +365,15 @@ function init() {
 
     function resetPattern() {
         pattern = [0.0];
-        //whereInPattern = 0; // why needed? set to 0 in beepFunction ...
+        /**
+            SIGN OF BUG:
+
+            This shouldn't be needed since it set to 0 in beepFunction
+            in response to handleRateChange being true.  However, if
+            the following line is removed, whereInPattern can be
+            incremented above the size of the pattern length.
+        */
+        whereInPattern = 0;
     }
 
     function updatePattern() {
@@ -381,45 +394,30 @@ function init() {
     }
 
     /**
-        Create visual representation of beat.
-
-        Currently, subdivisions are not shown.
+        Create visual representation of beat.  Subdivisions are
+        not shown.
     */
     function updateDisplay() {
-        /**
-            Show new beat.
-
-            Check: If endSignalled and we are on a subdivision other than last, we don't want to show anything.  Instead we want to hold
-            and erase the current beat.
-        */
-        visualBeats[beat].style.backgroundColor = 'red';
-        /**
-            Hide the previous beat.
-
-            We need to check previousBeat's value here.  If the number of
-            beats is reduced, previousBeat may be out-of-bounds.
-        */
-        if (previousBeat < numberOfBeats) {
-            visualBeats[previousBeat].style.backgroundColor = 'white';
-        }
-        /**
-            Clear the last element when the count has stopped.  It would
-            be nice to do this by continuing the animation frames, not
-            making a new red bubble and overwriting the last red bubble
-            with a white one.
-        */
-        if (endSignalled) {
+        if (killLoop) {
             /**
-                Keep a record of beat to clear.  This is done because
-                otherwise, If the start of a new count happens before
-                the callback is executed, the wrong element will be
-                cleared.  (The variable beat has changed in the
-                meantime.)
+                Clear the last shown beat when count is done.
             */
-            var finalBeat = beat;
-            setTimeout(function() {
-                visualBeats[finalBeat].style.backgroundColor = 'white';
-            }, secondsPerBeat * 1000);
+            visualBeats[beat].style.backgroundColor = 'white';
+        } else {
+            /**
+                Show new beat.
+            */
+            visualBeats[beat].style.backgroundColor = 'red';
+            if (previousBeat < numberOfBeats) {
+                /**
+                    Hide the previous beat.
+
+                    We need to check previousBeat's value here.  If
+                    number of beats is reduced, previousBeat may
+                    be out-of-bounds.
+                */
+                visualBeats[previousBeat].style.backgroundColor = 'white';
+            }
         }
     }
 
@@ -516,27 +514,30 @@ function init() {
     }
 
     /**
-        This function handles audio scheduling and updates the display
-        when it is time to change beats.
+        This function handles audio scheduling and calls beat display
+        updates.
 
-        Note: Visuals are out of sync with audio scheduling, since
-        screen updates are done "in the present," and sounds
-        are prepared for the future.  After scheduling the
-        last *tock*, we continue to watch the time in order
-        to call a screen update when the last sound arrives.
+        Notes are scheduled one at a time to allow for quick response
+        to user input.
 
-        TODO: if possible, simplify this.
+        Right now, audio scheduling and video updates are in lockstep:
+        as soon as the context reaches a scheduled time, we update
+        the display and schedule another event.
+
+        Note that visuals are out of sync with audio scheduling, since
+        screen updates are done "in the present," and sounds are
+        prepared for the future.
+
+        When the user requests a stop, we have scheduled a time for the
+        last sound and the last beat *appearance*.  We schedule one
+        more time to use for clearing the last beat on the screen.
+
+        TODO: if possible, simplify this.  Combine conditionsls?
     */
     function beepFunction() {
         /**
             As soon as possible after a note starts playing, schedule
             the next one.
-
-            Note: if the tempo gets really really fast, condition
-            below will always be true.  Current time will drift from
-            last note time.  Notes will be scheduled further and
-            further in the past (meaning that they will sound in
-            the present).  (Moot now that tempo input is limited.)
         */
         if (audioCtx.currentTime >= lastNoteTime){
             /**
@@ -547,81 +548,88 @@ function init() {
                 Checking whether whereInPattern is 0 limits display to
                 beats rather than every subdivision.
 
-                If count end is requested, we need to clear the currently
+                When count is finished, we need to clear the currently
                 lit element.
             */
-            if ((!countJustBegun && whereInPattern === 0) || endSignalled) {
+            if ((!countJustBegun && whereInPattern === 0) || killLoop) {
                 updateDisplay();
+            }
+
+            if (killLoop) {
+                killLoop = false;
+                cancelAnimationFrame(beepFrame);
+                beepFrame = false;
+                endRequested = false;
+                return;
             }
 
             /**
                 Advance beat counters.
             */
-            if (!endSignalled && whereInPattern == pattern.length - 1) {
+            if (!endRequested && whereInPattern == pattern.length - 1) {
                 advanceBeat();
             }
 
-            if (endSignalled) {
-                cancelAnimationFrame(beepFrame);
-                beepFrame = false;
-                endSignalled = false;
-                return;
+            /**
+                Advance where we are in pattern.  If we are at the
+                end, return to first note and process any changes
+                of division and tempo.
+            */
+            if (whereInPattern === pattern.length - 1) {
+                whereInPattern = 0;
+                /**
+                    If a change is requested, the arrival of the
+                    new pattern statement happens according to the
+                    old tempo.  Then the new settings take effect.
+
+                    Don't delay the very first beat by the pattern
+                    length, though.
+                */
+                if (!countJustBegun) {
+                    patternStartTime += patternSeconds;
+                }
+                if (handleRateChange) {
+                    patternSeconds = secondsPerBeat;
+                    updatePattern();
+                    handleRateChange = false;
+                }
             } else {
-                /**
-                    Advance where we are in pattern.  If we are at the
-                    end, return to first note and process any Changes
-                    of division and tempo.
-                */
-                if (whereInPattern === pattern.length - 1) {
-                    whereInPattern = 0;
-                    /**
-                        If a change is requested, the arrival of the
-                        new pattern statement happens according to the
-                        old tempo.  Then the new settings take effect.
-
-                        Don't delay the very first beat by the pattern
-                        length, though.
-                    */
-                    if (!countJustBegun) {
-                        patternStartTime += patternSeconds;
-                    }
-                    if (handleRateChange) {
-                        patternSeconds = secondsPerBeat;
-                        updatePattern();
-                        handleRateChange = false;
-                    }
-                } else {
-                    whereInPattern++;
-                }
-
-                newNoteTime = patternStartTime + pattern[whereInPattern] * patternSeconds;
-                /**
-                    Select volume of note based on accent pattern.
-
-                    No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
-                    0-1 have obvious effect, but values > 1 don't seem to
-                    increase the volume at all.  Very high values distort
-                    sound.  Possibly there should be an option to use a
-                    different sound as an accent?
-                */
-                //var gain = ((whereInPattern === 0) &&
-                //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : //1.0;
-
-                var currentBuffer = getSoundBuffer();
-
-                scheduleSound(currentBuffer, newNoteTime, 1.0);
-
-                if (countJustBegun) {
-                    countJustBegun = false;
-                }
-
-                lastNoteTime = newNoteTime;
+                whereInPattern++;
             }
+
+            newNoteTime = patternStartTime + pattern[whereInPattern] * patternSeconds;
+            /**
+                Select volume of note based on accent pattern.
+
+                No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
+                0-1 have obvious effect, but values > 1 don't seem to
+                increase the volume at all.  Very high values distort
+                sound.  Possibly there should be an option to use a
+                different sound as an accent?
+            */
+            //var gain = ((whereInPattern === 0) &&
+            //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : //1.0;
+
+            if (!endRequested) {
+                var currentBuffer = getSoundBuffer();
+                // test for handleRateChange flaw (see resetPattern)
+                //console.log(whereInPattern);
+                scheduleSound(currentBuffer, newNoteTime, 1.0);
+            }
+
+            if (countJustBegun) {
+                countJustBegun = false;
+            }
+
+            if (endRequested) {
+                killLoop = true;
+            }
+
+            lastNoteTime = newNoteTime;
         }
 
         beepFrame = requestAnimationFrame(beepFunction);
     }
-
 
     /************************ EVENT HANDLERS **************************/
 
@@ -643,7 +651,7 @@ function init() {
         */
         if (!beepFrame) {
             countJustBegun = true;
-            endSignalled = false;
+            endRequested = false;
             /**
                 Set beat to last beat of count.  It will be incremented
                 to 0 when beepFunction is called.
@@ -666,7 +674,7 @@ function init() {
     };
 
     off.onclick = function() {
-        endSignalled = true;
+        endRequested = true;
     };
 
     /**
