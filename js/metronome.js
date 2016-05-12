@@ -192,7 +192,10 @@ var soundAssociations = initializeStoredVariable('soundAssociations', SOUND_ASSO
     with meaningful identifiers. An entry of 'false' indicates an
     unsuccessful load.
 
-    Once all sounds are loaded, call init function.
+    Once all sounds are loaded, we make sure that every type of
+    sound (ordinary default beat, accented downbeat, accented
+    secondary beat, or subdivision) has a valid assignment.  If
+    so, we then call init.
 
     Beep.mp3 taken from Audiosoundclips.com:
     http://audiosoundclips.com/wp-content/uploads/2011/12/Beep.mp3
@@ -201,14 +204,14 @@ var soundAssociations = initializeStoredVariable('soundAssociations', SOUND_ASSO
     http://soundbible.com/914-Metronome.html
 */
 
-var soundLibrary = {};
-
 var soundFiles = {
     tock: 'sounds/metronome_sound.mp3',
     harshBeep: 'sounds/Beep.mp3',
     woodBlock: 'sounds/527.mp3',
     popCork: 'sounds/pop-cork.mp3'
 };
+
+var soundLibrary = {};
 
 function loadSound(key, url) {
     var fileCount = Object.keys(soundFiles).length;
@@ -221,20 +224,13 @@ function loadSound(key, url) {
                 soundLibrary[key] = buffer;
                 // we assume that one file will be processed last...
                 if (Object.keys(soundLibrary).length == fileCount) {
-                    init();
+                    checkSoundAssociations();
                 }
             });
         } else {
-            console.log('Problem loading sound file.');
-            /**
-                Note: We will have to make sure that soundLibrary has
-                two sounds in it.  In the case of a single successful
-                sound load, we would probably copy that buffer to the
-                other slot.
-            */
             soundLibrary[key] = false;
             if (Object.keys(soundLibrary).length == fileCount) {
-                init();
+                checkSoundAssociations();
             }
         }
     };
@@ -248,21 +244,68 @@ for (var key in soundFiles) {
 }
 
 /**
-    Called when sounds are loaded.
+    Make sure that classes of sound are associated with files that
+    have loaded successfully.
+
+    In case a type is paired with a sound which hasn't loaded,
+    we assign it the default 'tock' if possible, the first
+    available sound we find if not.  If no sound is available, we
+    do not proceed any further.
+*/
+function getAlternateAssociation(key) {
+    // Favor 'tock' as the default
+    if (soundLibrary.tock) {
+        return 'tock';
+    }
+    for(var sound in soundLibrary) {
+        if (soundLibrary.hasOwnProperty(sound) &&
+            soundLibrary[sound]) {
+            return sound;
+        }
+    }
+    // A roundabout way of discovering that all sounds didn't load...
+    return false;
+}
+
+function checkSoundAssociations() {
+    var alternate,
+        haveAtLeastOneSound = true;
+    for (var key in soundAssociations) {
+        if (soundAssociations.hasOwnProperty(key)) {
+            if (!soundLibrary[soundAssociations[key]]) {
+                alternate = getAlternateAssociation(key);
+                if (!alternate) {
+                    haveAtLeastOneSound = false;
+                    break;
+                }
+                soundAssociations[key] = alternate;
+            }
+        }
+    }
+
+    if (haveAtLeastOneSound) {
+        init();
+    } else {
+        alert('No sounds could be loaded!');
+    }
+}
+/**
+    Called when sounds are loaded and associated with sound types.
 */
 function init() {
     // Create DOM elements for beat display.
     updateBeatDisplay();
     // Create DOM elements for accented beat selector
     updateAccentedBeatToggles();
-    // assign sounds
+    // Add options to sound selection menu.
     populateSoundMenu();
 
     /**
         An array storing location of events within the repeating pattern
-        (a single beat or a beat and its subdivisions).  Location is expressed
-        as a floating-point number between 0.0 and 1.0.  This will be
-        multiplied by secondsPerBeat to give the offset in seconds.
+        (a single beat or a beat and its subdivisions).  Location is
+        expressed as a floating-point number between 0.0 and 1.0.  This
+        will be multiplied by secondsPerBeat to give the offset in
+        seconds.
     */
     var pattern = [0.0];
     /**
@@ -323,9 +366,9 @@ function init() {
     }
 
     /**
-        Build option lists for sound selection.  Select the default assignments
-        for each role: ordinary default beat, accented downbeat, accented
-        secondary beat, and subdivision.
+        Build option lists for sound selection.  Select the
+        assignments for each role based on soundAssociations
+        object.
     */
     function populateSoundMenu() {
         var menuElements = document.getElementsByClassName('sound-menu-element');
@@ -335,13 +378,14 @@ function init() {
         for(var i = 0; i < menuElements.length; i++) {
             currentElement = menuElements[i];
             /**
-                IMPORTANT: DOM ids and soundAssociation keys MUST match for this
-                to work.  Possibly we ought to set ids from this object so there
-                is no chance for mistakes to occur.
+                IMPORTANT: DOM ids and soundAssociation keys MUST match
+                for this to work.  Possibly we ought to set ids from this
+                object so there is no chance for mistakes to occur.
             */
             toSelect = soundAssociations[currentElement.id];
-            for(var sound in soundFiles) {
-                if (soundFiles.hasOwnProperty(sound)) {
+            for(var sound in soundLibrary) {
+                if (soundLibrary.hasOwnProperty(sound) &&
+                    soundLibrary[sound]) {
                     soundChoice = document.createElement('option');
                     soundChoice.innerHTML = sound;
                     soundChoice.setAttribute('value', sound);
@@ -366,12 +410,12 @@ function init() {
     function resetPattern() {
         pattern = [0.0];
         /**
-            SIGN OF BUG:
+            SIGN OF FLAW:
 
-            This shouldn't be needed since it set to 0 in beepFunction
-            in response to handleRateChange being true.  However, if
-            the following line is removed, whereInPattern can be
-            incremented above the size of the pattern length.
+            This shouldn't be needed since whereInPattern is set to 0
+            in beepFunction in response to handleRateChange being true.
+            However, if the following line is removed, whereInPattern
+            can be incremented above the size of the pattern length.
         */
         whereInPattern = 0;
     }
@@ -397,29 +441,37 @@ function init() {
         Create visual representation of beat.  Subdivisions are
         not shown.
     */
+
+    function showBeat(b) {
+         visualBeats[b].style.backgroundColor = 'red';
+    }
+
+    function hideBeat(b) {
+        visualBeats[b].style.backgroundColor = 'white';
+    }
+
+    /**
+        Light the current beat and clear the previous beat.
+        When the count is over, clear the current beat.
+    */
     function updateDisplay() {
         if (killLoop) {
-            /**
-                Clear the last shown beat when count is done.
-            */
-            visualBeats[beat].style.backgroundColor = 'white';
+            hideBeat(beat);
         } else {
+            showBeat(beat);
             /**
-                Show new beat.
+                If number of beats is reduced, previousBeat may
+                be out-of-bounds.
             */
-            visualBeats[beat].style.backgroundColor = 'red';
             if (previousBeat < numberOfBeats) {
-                /**
-                    Hide the previous beat.
-
-                    We need to check previousBeat's value here.  If
-                    number of beats is reduced, previousBeat may
-                    be out-of-bounds.
-                */
-                visualBeats[previousBeat].style.backgroundColor = 'white';
+                hideBeat(previousBeat);
             }
         }
     }
+
+    /**
+        Add or remove beat bubbles when a new size is selected.
+    */
 
     function addBeatBubble() {
         var newBubble = document.createElement('div');
@@ -430,9 +482,7 @@ function init() {
     function removeBeatBubble() {
         beatBubbles.removeChild(beatBubbles.lastElementChild);
     }
-    /**
-        Add or remove beat bubbles when a new size is selected.
-    */
+
     function updateBeatDisplay() {
         var beatsDrawnCount = visualBeats.length;
         if (beatsDrawnCount < numberOfBeats) {
