@@ -543,7 +543,7 @@ function init() {
     /**
         Build a new beat profile.
 
-        Only call this from beepFunction (i.e., when pattern changes are
+        Only call this from beepSequence (i.e., when pattern changes are
         processed) so whereInBeat is always in sync with the beat pattern.
     */
     function updatePattern() {
@@ -556,8 +556,7 @@ function init() {
     }
 
     /**
-        This function handles audio scheduling and calls beat display
-        updates.
+        This function schedules single sound and display events.
 
         Notes are scheduled one at a time to allow for quick response
         to user input.
@@ -570,31 +569,19 @@ function init() {
         screen updates are done "in the present," and sounds are
         prepared for the future.
 
-        When the user requests a stop, we have scheduled a time for the
-        last sound and the last beat *appearance*.  We schedule one
-        more time to use for clearing the last beat on the screen.
-
-        TODO: if possible, simplify this.  Combine conditionsls?
+        When the user requests a stop, we have already scheduled a time
+        for the last sound and the last beat *appearance*.  We schedule
+        one more time to use for clearing the last beat on the screen.
     */
-    function beepFunction() {
-        /**
-            As soon as possible after a note starts playing, schedule
-            the next one.
-        */
-        if (audioCtx.currentTime >= lastNoteTime){
-            /**
-                When count is finished, we need to call the display
-                function one last time in order to clear the currently
-                lit element.
-            */
-            if (wrapUpCount) {
-                updateDisplay();
-                wrapUpCount = false;
-                cancelAnimationFrame(beepFrame);
-                beepFrame = false;
-                return;
-            }
 
+    function beep() {
+        if (wrapUpCount) {
+            // Clear the currently lit element.
+            updateDisplay();
+            wrapUpCount = false;
+            cancelAnimationFrame(beepFrame); // necessary?
+            beepFrame = false;
+        } else {
             /**
                 If we have just begun a count, we don't want to call
                 display because the beginning cycle schedules a future
@@ -649,7 +636,7 @@ function init() {
                 different sound as an accent?
             */
             //var gain = ((whereInBeat === 0) &&
-            //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : //1.0;
+            //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : 1.0;
 
             if (!endRequested) {
                 var currentBuffer = getSoundBuffer();
@@ -667,8 +654,18 @@ function init() {
 
             lastNoteTime = newNoteTime;
         }
+    }
 
-        beepFrame = requestAnimationFrame(beepFunction);
+    function beepSequence() {
+        /**
+            As soon as possible after a note starts playing, schedule
+            the next one.
+        */
+        if (audioCtx.currentTime >= lastNoteTime){
+            beep();
+        }
+        // beepFrame will be false when ending
+        return !beepFrame || requestAnimationFrame(beepSequence);
     }
 
 
@@ -695,22 +692,22 @@ function init() {
             endRequested = false;
             /**
                 Set beat to last beat of count.  It will be incremented
-                to 0 when beepFunction is called.
+                to 0 when beepSequence is called.
             */
             beat = numberOfBeats - 1;
             patternSeconds = secondsPerBeat;
             patternStartTime = audioCtx.currentTime + startOffset;
-            // set to -1 so beepFunction loop triggers immediately
+            // set to -1 so beepSequence loop triggers immediately
             lastNoteTime = -1;
             /**
                 Set to last note of the pattern.  Subdivisions are
-                processed as a change, and beepFunction only allows
+                processed as a change, and beepSequence only allows
                 changes when we reach the last note of a pattern.  We
                 will start with the right note b/c whereInBeat is
                 set to 0 after changes are processed.
             */
             whereInBeat = pattern.length - 1;
-            beepFrame = requestAnimationFrame(beepFunction);
+            beepFrame = requestAnimationFrame(beepSequence);
         }
     };
 
