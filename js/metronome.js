@@ -612,11 +612,6 @@ function init() {
             //var gain = ((whereInBeat === 0) &&
             //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : 1.0;
 
-            if (!endRequested) {
-                var currentBuffer = getSoundBuffer();
-                scheduleSound(currentBuffer, newNoteTime, 1.0);
-            }
-
             if (countJustBegun) {
                 countJustBegun = false;
             }
@@ -624,6 +619,9 @@ function init() {
             if (endRequested) {
                 endRequested = false;
                 wrapUpCount = true;
+            } else {
+                var currentBuffer = getSoundBuffer();
+                scheduleSound(currentBuffer, newNoteTime, 1.0);
             }
 
             lastNoteTime = newNoteTime;
