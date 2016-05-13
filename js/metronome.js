@@ -2,7 +2,6 @@
     TODO:
     - collect more sounds
     - remember more settings between sessions (meter, subdivision)
-    - handle unavailable sound files
     - simplify beatFunction if possible
 */
 
@@ -317,7 +316,7 @@ function init() {
         Flag representing final end of count.  (There is a wrap-up
         after the user requests an end.)
     */
-    var killLoop = false;
+    var wrapUpCount = false;
     /**
         Stores id for animation frame to control repetition/stop of count.
     */
@@ -328,7 +327,7 @@ function init() {
         not shortened -- noticeably so on my Samsung Galaxy SIII.
     */
     var startOffset = 0.4;
-    var whereInPattern;
+    var whereInBeat;
     var previousBeat = numberOfBeats - 1,
         beat;
 
@@ -407,28 +406,6 @@ function init() {
         }
     }
 
-    function resetPattern() {
-        pattern = [0.0];
-        /**
-            SIGN OF FLAW:
-
-            This shouldn't be needed since whereInPattern is set to 0
-            in beepFunction in response to handleRateChange being true.
-            However, if the following line is removed, whereInPattern
-            can be incremented above the size of the pattern length.
-        */
-        whereInPattern = 0;
-    }
-
-    function updatePattern() {
-        resetPattern();
-        if (division > 1) {
-            for (var i = 1; i < division; i++) {
-                pattern.push(i/division);
-            }
-        }
-    }
-
     function toggleSound() {
         muted = !muted;
         mute.classList.toggle('muted');
@@ -455,7 +432,7 @@ function init() {
         When the count is over, clear the current beat.
     */
     function updateDisplay() {
-        if (killLoop) {
+        if (wrapUpCount) {
             hideBeat(beat);
         } else {
             showBeat(beat);
@@ -538,7 +515,7 @@ function init() {
     */
     function getSoundBuffer() {
         // subdivision
-        if (whereInPattern !== 0) {
+        if (whereInBeat !== 0) {
             return soundLibrary[soundAssociations['subdivision-sound']];
         }
         // ordinary beat
@@ -560,6 +537,21 @@ function init() {
             beat = 0;
         } else {
             beat++;
+        }
+    }
+
+    /**
+        Build a new beat profile.
+
+        Only call this from beepFunction (i.e., when pattern changes are
+        processed) so whereInBeat is always in sync with the beat pattern.
+    */
+    function updatePattern() {
+        pattern = [0.0];
+        if (division > 1) {
+            for (var i = 1; i < division; i++) {
+                pattern.push(i/division);
+            }
         }
     }
 
@@ -591,48 +583,47 @@ function init() {
         */
         if (audioCtx.currentTime >= lastNoteTime){
             /**
-                If we have just begun a count, we don't want to call
-                display because the beginning cycle schedules a future
-                audio event.
-
-                Checking whether whereInPattern is 0 limits display to
-                beats rather than every subdivision.
-
-                When count is finished, we need to clear the currently
+                When count is finished, we need to call the display
+                function one last time in order to clear the currently
                 lit element.
             */
-            if ((!countJustBegun && whereInPattern === 0) || killLoop) {
+            if (wrapUpCount) {
                 updateDisplay();
-            }
-
-            if (killLoop) {
-                killLoop = false;
+                wrapUpCount = false;
                 cancelAnimationFrame(beepFrame);
                 beepFrame = false;
-                endRequested = false;
                 return;
             }
 
             /**
-                Advance beat counters.
+                If we have just begun a count, we don't want to call
+                display because the beginning cycle schedules a future
+                audio event.
+
+                Checking whether whereInBeat is 0 limits display to
+                beats rather than every subdivision.
             */
-            if (!endRequested && whereInPattern == pattern.length - 1) {
-                advanceBeat();
+            if (!countJustBegun && whereInBeat === 0) {
+                updateDisplay();
             }
 
             /**
-                Advance where we are in pattern.  If we are at the
-                end, return to first note and process any changes
-                of division and tempo.
+                Advance beat and where we are in beat pattern.
+
+                Process any changes of division and tempo when
+                beat advances.
             */
-            if (whereInPattern === pattern.length - 1) {
-                whereInPattern = 0;
+            if (whereInBeat === pattern.length - 1) {
+                whereInBeat = 0;
+                if (!endRequested) {
+                    advanceBeat();
+                }
                 /**
-                    If a change is requested, the arrival of the
-                    new pattern statement happens according to the
+                    If a change is requested, the arrival of the new
+                    beat pattern statement happens according to the
                     old tempo.  Then the new settings take effect.
 
-                    Don't delay the very first beat by the pattern
+                    Don't delay the very first beat by the beat
                     length, though.
                 */
                 if (!countJustBegun) {
@@ -644,10 +635,10 @@ function init() {
                     handleRateChange = false;
                 }
             } else {
-                whereInPattern++;
+                whereInBeat++;
             }
 
-            newNoteTime = patternStartTime + pattern[whereInPattern] * patternSeconds;
+            newNoteTime = patternStartTime + pattern[whereInBeat] * patternSeconds;
             /**
                 Select volume of note based on accent pattern.
 
@@ -657,13 +648,11 @@ function init() {
                 sound.  Possibly there should be an option to use a
                 different sound as an accent?
             */
-            //var gain = ((whereInPattern === 0) &&
+            //var gain = ((whereInBeat === 0) &&
             //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : //1.0;
 
             if (!endRequested) {
                 var currentBuffer = getSoundBuffer();
-                // test for handleRateChange flaw (see resetPattern)
-                //console.log(whereInPattern);
                 scheduleSound(currentBuffer, newNoteTime, 1.0);
             }
 
@@ -672,7 +661,8 @@ function init() {
             }
 
             if (endRequested) {
-                killLoop = true;
+                endRequested = false;
+                wrapUpCount = true;
             }
 
             lastNoteTime = newNoteTime;
@@ -680,6 +670,7 @@ function init() {
 
         beepFrame = requestAnimationFrame(beepFunction);
     }
+
 
     /************************ EVENT HANDLERS **************************/
 
@@ -715,10 +706,10 @@ function init() {
                 Set to last note of the pattern.  Subdivisions are
                 processed as a change, and beepFunction only allows
                 changes when we reach the last note of a pattern.  We
-                will start with the right note b/c whereInPattern is
+                will start with the right note b/c whereInBeat is
                 set to 0 after changes are processed.
             */
-            whereInPattern = pattern.length - 1;
+            whereInBeat = pattern.length - 1;
             beepFrame = requestAnimationFrame(beepFunction);
         }
     };
@@ -780,7 +771,6 @@ function init() {
             division = divisions.value;
             subdivide.innerHTML = 'subdivide off';
         } else {
-            resetPattern();
             division = 1;
             subdivide.innerHTML = 'subdivide';
         }
