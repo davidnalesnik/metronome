@@ -556,44 +556,18 @@ function init() {
     }
 
     /**
-        This function schedules single sound and display events.
+        This function schedules single sounds.  The times will
+        also be used for visual events.
 
         Notes are scheduled one at a time to allow for quick response
         to user input.
-
-        Right now, audio scheduling and video updates are in lockstep:
-        as soon as the context reaches a scheduled time, we update
-        the display and schedule another event.
-
-        Note that visuals are out of sync with audio scheduling, since
-        screen updates are done "in the present," and sounds are
-        prepared for the future.
-
-        When the user requests a stop, we have already scheduled a time
-        for the last sound and the last beat *appearance*.  We schedule
-        one more time to use for clearing the last beat on the screen.
     */
-
     function beep() {
         if (wrapUpCount) {
-            // Clear the currently lit element.
-            updateDisplay();
             wrapUpCount = false;
             cancelAnimationFrame(beepFrame); // necessary?
             beepFrame = false;
         } else {
-            /**
-                If we have just begun a count, we don't want to call
-                display because the beginning cycle schedules a future
-                audio event.
-
-                Checking whether whereInBeat is 0 limits display to
-                beats rather than every subdivision.
-            */
-            if (!countJustBegun && whereInBeat === 0) {
-                updateDisplay();
-            }
-
             /**
                 Advance beat and where we are in beat pattern.
 
@@ -655,13 +629,39 @@ function init() {
             lastNoteTime = newNoteTime;
         }
     }
+    /**
+        Oversee the audio and visual aspects of a count.
 
+        Right now, audio scheduling and video updates are in lockstep:
+        as soon as the context reaches a scheduled time, we update
+        the display and schedule another event.
+
+        Note that visuals are one beat out of sync with audio scheduling,
+        since screen updates are done "in the present," and sounds are
+        prepared for the future.
+
+        When the user requests a stop, we have already scheduled a time
+        for the last sound and the last beat *appearance*.  We schedule
+        one more time to use for clearing the last beat on the screen.
+    */
     function beepSequence() {
         /**
-            As soon as possible after a note starts playing, schedule
-            the next one.
+            When the current time reaches a scheduled time,
+            update the display and schedule another note.
         */
         if (audioCtx.currentTime >= lastNoteTime){
+            /**
+                If we have just begun a count, we don't want to call
+                display because the beginning cycle schedules a future
+                audio event.
+
+                Checking whether whereInBeat is 0 limits display to
+                beats rather than every subdivision.
+            */
+            if ((!countJustBegun && whereInBeat === 0) || wrapUpCount) {
+                updateDisplay();
+            }
+            // sound
             beep();
         }
         // beepFrame will be false when ending
