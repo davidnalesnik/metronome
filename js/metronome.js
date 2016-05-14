@@ -2,7 +2,6 @@
     TODO:
     - collect more sounds
     - remember more settings between sessions (meter, subdivision)
-    - simplify beatFunction if possible
 */
 
 /**
@@ -55,9 +54,9 @@ var MUTED_DEFAULT = false,
     BEAT_VISIBLE = true,
     SOUND_ASSOCIATIONS_DEFAULT = {
         'default-sound': 'tock',
-        'downbeat-sound': 'harshBeep',
-        'secondary-accent-sound': 'popCork',
-        'subdivision-sound': 'woodBlock'
+        'downbeat-sound': 'beep',
+        'secondary-accent-sound': 'cork',
+        'subdivision-sound': 'woodblock'
     };
 
 /**
@@ -196,18 +195,24 @@ var soundAssociations = initializeStoredVariable('soundAssociations', SOUND_ASSO
     secondary beat, or subdivision) has a valid assignment.  If
     so, we then call init.
 
-    Beep.mp3 taken from Audiosoundclips.com:
+    beep.mp3 derived from
     http://audiosoundclips.com/wp-content/uploads/2011/12/Beep.mp3
 
-    metronome_sound.mp3 derived from metronome sound by Mike Koenig:
-    http://soundbible.com/914-Metronome.html
+    metronome.mp3 derived from clip at
+    http://soundbible.com/914-Metronome.html, recorded by Mike Koenig
+
+    woodblock.mp3 derived from "Wood block 10" at
+    http://eng.universal-soundbank.com/woodblock.htm
+
+    pop-cork.mp3 derived from clip at http://soundbible.com/533-Pop-Cork.html,
+    recorded by Mike Koenig
 */
 
 var soundFiles = {
-    tock: 'sounds/metronome_sound.mp3',
-    harshBeep: 'sounds/Beep.mp3',
-    woodBlock: 'sounds/527.mp3',
-    popCork: 'sounds/pop-cork.mp3'
+    tock: 'sounds/metronome.mp3',
+    beep: 'sounds/beep.mp3',
+    woodblock: 'sounds/woodblock.mp3',
+    cork: 'sounds/pop-cork.mp3'
 };
 
 var soundLibrary = {};
