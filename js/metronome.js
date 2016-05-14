@@ -3,8 +3,7 @@
     - collect more sounds
     - remember more settings between sessions (meter, subdivision)
 */
-
-(function() {
+(function () {
     /**
         Create AudioContext.
     */
@@ -20,9 +19,12 @@
         DOM selectors
     */
     var sideMenuToggle = document.getElementById('side-menu-toggle'),
-        downbeatAccentToggle = document.getElementById('downbeat-accent-toggle'),
-        beatVisibilityToggle = document.getElementById('beat-visibility-toggle'),
-        metricAccentToggles = document.getElementById('metric-accent-toggles'),
+        downbeatAccentToggle = document.getElementById(
+            'downbeat-accent-toggle'),
+        beatVisibilityToggle = document.getElementById(
+            'beat-visibility-toggle'),
+        metricAccentToggles = document.getElementById(
+            'metric-accent-toggles'),
         on = document.getElementById('start-button'),
         off = document.getElementById('stop-button'),
         tempoTapTarget = document.getElementById('tempo-tap-target'),
@@ -37,9 +39,9 @@
     /**
         Show/hide options menu.
     */
-    sideMenuToggle.onclick = function(ev) {
-         //ev.preventDefault();
-         this.parentNode.classList.toggle('show-side-menu');
+    sideMenuToggle.onclick = function (ev) {
+        //ev.preventDefault();
+        this.parentNode.classList.toggle('show-side-menu');
     };
 
     /**
@@ -84,12 +86,11 @@
     function storageAvailable(type) {
         try {
             var storage = window[type],
-            x = '__storage_test__';
+                x = '__storage_test__';
             storage.setItem(x, x);
             storage.removeItem(x);
             return true;
-        }
-        catch(e) {
+        } catch (e) {
             return false;
         }
     }
@@ -157,14 +158,16 @@
     /**
         Initial beat count
     */
-    var numberOfBeats = initializeStoredVariable('numberOfBeats', BEAT_COUNT_DEFAULT);
+    var numberOfBeats = initializeStoredVariable('numberOfBeats',
+        BEAT_COUNT_DEFAULT);
 
     beatCountSelect[numberOfBeats - 2].setAttribute('selected', true);
 
     /**
         Initial accent downbeat
     */
-    var accentDownbeat = initializeStoredVariable('accentDownbeat', ACCENT_DOWNBEAT);
+    var accentDownbeat = initializeStoredVariable('accentDownbeat',
+        ACCENT_DOWNBEAT);
 
     downbeatAccentToggle.checked = accentDownbeat;
 
@@ -182,7 +185,8 @@
     /**
         Initial sound associations
     */
-    var soundAssociations = initializeStoredVariable('soundAssociations', SOUND_ASSOCIATIONS_DEFAULT);
+    var soundAssociations = initializeStoredVariable('soundAssociations',
+        SOUND_ASSOCIATIONS_DEFAULT);
 
     /**
         LOAD SOUNDS
@@ -223,12 +227,13 @@
         var req = new XMLHttpRequest();
         req.open('GET', url);
         req.responseType = 'arraybuffer';
-        req.onload = function(response) {
+        req.onload = function (response) {
             if (req.status == 200) {
                 audioCtx.decodeAudioData(req.response, function (buffer) {
                     soundLibrary[key] = buffer;
                     // we assume that one file will be processed last...
-                    if (Object.keys(soundLibrary).length == fileCount) {
+                    if (Object.keys(soundLibrary).length ==
+                        fileCount) {
                         checkSoundAssociations();
                     }
                 });
@@ -262,7 +267,7 @@
         if (soundLibrary.tock) {
             return 'tock';
         }
-        for(var sound in soundLibrary) {
+        for (var sound in soundLibrary) {
             if (soundLibrary.hasOwnProperty(sound) &&
                 soundLibrary[sound]) {
                 return sound;
@@ -376,11 +381,12 @@
             object.
         */
         function populateSoundMenu() {
-            var menuElements = document.getElementsByClassName('sound-menu-element');
+            var menuElements = document.getElementsByClassName(
+                'sound-menu-element');
             var currentElement,
                 soundChoice,
                 toSelect;
-            for(var i = 0; i < menuElements.length; i++) {
+            for (var i = 0; i < menuElements.length; i++) {
                 currentElement = menuElements[i];
                 /**
                     IMPORTANT: DOM ids and soundAssociation keys MUST match
@@ -388,7 +394,7 @@
                     object so there is no chance for mistakes to occur.
                 */
                 toSelect = soundAssociations[currentElement.id];
-                for(var sound in soundLibrary) {
+                for (var sound in soundLibrary) {
                     if (soundLibrary.hasOwnProperty(sound) &&
                         soundLibrary[sound]) {
                         soundChoice = document.createElement('option');
@@ -406,7 +412,7 @@
 
         function setSecondsPerBeat() {
             var val = getNormalizedInput(bpm.value);
-            secondsPerBeat = 60/val;
+            secondsPerBeat = 60 / val;
             if (haveLocalStorage) {
                 localStorage.setItem('bpm', JSON.stringify(val));
             }
@@ -426,7 +432,7 @@
         */
 
         function showBeat(b) {
-             visualBeats[b].style.backgroundColor = 'red';
+            visualBeats[b].style.backgroundColor = 'red';
         }
 
         function hideBeat(b) {
@@ -479,7 +485,7 @@
             }
         }
 
-        function updateDownbeatAccent () {
+        function updateDownbeatAccent() {
             accentDownbeat = this.checked;
             downbeatAccentToggle.checked = accentDownbeat;
         }
@@ -491,7 +497,7 @@
             */
             metricAccentToggles.innerHTML = '';
             var accentToggle, label;
-            for(var i = 0; i < numberOfBeats; i++) {
+            for (var i = 0; i < numberOfBeats; i++) {
                 label = document.createElement('label');
                 label.setAttribute('class', 'beat-label');
                 label.innerHTML = i + 1;
@@ -513,7 +519,7 @@
         function isBeatAccented(beat) {
             // beat doesn't actually need to be parameter, but let's be safe
             return (beat === 0 && accentDownbeat) ||
-            document.getElementById(beat).checked;
+                document.getElementById(beat).checked;
         }
 
         /**
@@ -529,8 +535,9 @@
                 return soundLibrary[soundAssociations['default-sound']];
             }
             // accented beats (downbeat, secondary)
-            return (beat === 0) ? soundLibrary[soundAssociations['downbeat-sound']] :
-            soundLibrary[soundAssociations['secondary-accent-sound']];
+            return (beat === 0) ? soundLibrary[soundAssociations[
+                    'downbeat-sound']] :
+                soundLibrary[soundAssociations['secondary-accent-sound']];
         }
 
         /**
@@ -556,7 +563,7 @@
             pattern = [0.0];
             if (division > 1) {
                 for (var i = 1; i < division; i++) {
-                    pattern.push(i/division);
+                    pattern.push(i / division);
                 }
             }
         }
@@ -605,7 +612,8 @@
                     whereInBeat++;
                 }
 
-                newNoteTime = patternStartTime + pattern[whereInBeat] * patternSeconds;
+                newNoteTime = patternStartTime + pattern[whereInBeat] *
+                    patternSeconds;
                 /**
                     Select volume of note based on accent pattern.
 
@@ -653,7 +661,7 @@
                 When the current time reaches a scheduled time,
                 update the display and schedule another note.
             */
-            if (audioCtx.currentTime >= lastNoteTime){
+            if (audioCtx.currentTime >= lastNoteTime) {
                 /**
                     If we have just begun a count, we don't want to call
                     display because the beginning cycle schedules a future
@@ -675,7 +683,7 @@
 
         /************************ EVENT HANDLERS **************************/
 
-        on.onclick = function() {
+        on.onclick = function () {
             /**
                 This is necessary on Safari(tested on iPhone 5S, iOS 9.3.1).
                 See https://bugs.chromium.org/p/chromium/issues/detail?id=159359
@@ -715,14 +723,14 @@
             }
         };
 
-        off.onclick = function() {
+        off.onclick = function () {
             endRequested = true;
         };
 
         /**
             Set a new speed.
         */
-        bpm.onchange = function() {
+        bpm.onchange = function () {
             setSecondsPerBeat();
             handleRateChange = true;
         };
@@ -732,7 +740,7 @@
         */
 
         // Downbeat accent
-        downbeatAccentToggle.onchange = function() {
+        downbeatAccentToggle.onchange = function () {
             accentDownbeat = this.checked;
             setStoredVariable('accentDownbeat', accentDownbeat);
             // update metrical accent selector
@@ -740,7 +748,7 @@
         };
 
         // Show beats
-        beatVisibilityToggle.onchange = function() {
+        beatVisibilityToggle.onchange = function () {
             beatVisible = this.checked;
             beatBubbles.classList.toggle('hide');
             setStoredVariable('beatVisible', beatVisible);
@@ -765,7 +773,7 @@
         /**
             Subdivide
         */
-        subdivide.onclick = function() {
+        subdivide.onclick = function () {
             playSubdivisions = !playSubdivisions; // toggle
 
             if (playSubdivisions) {
@@ -779,14 +787,14 @@
             handleRateChange = true;
         };
 
-        divisions.onchange = function() {
+        divisions.onchange = function () {
             division = divisions.value;
             if (playSubdivisions) {
                 handleRateChange = true;
             }
         };
 
-        beatCountSelect.onchange = function() {
+        beatCountSelect.onchange = function () {
             /**
                 When decreasing the length of the measure, the current
                 beat may be too large.  Resetting to zero (downbeat) is
@@ -827,14 +835,16 @@
                 left incomplete and begin anew.
             */
             if (tempoTapperArray &&
-                tapTime - tempoTapperArray[tempoTapperArray.length - 1] > 4) {
+                tapTime - tempoTapperArray[tempoTapperArray.length - 1] > 4
+            ) {
                 tempoTapperArray = [tapTime];
             } else {
                 tempoTapperArray.push(tapTime);
                 if (tempoTapperArray.length == TAPS_TO_SET_TEMPO) {
                     var deltas = [];
-                    for(var i = 1; i < TAPS_TO_SET_TEMPO; i++) {
-                        deltas.push(tempoTapperArray[i] - tempoTapperArray[i - 1]);
+                    for (var i = 1; i < TAPS_TO_SET_TEMPO; i++) {
+                        deltas.push(tempoTapperArray[i] - tempoTapperArray[
+                            i - 1]);
                     }
                     var avg = deltas.reduce(function (a, b) {
                         return a + b;
@@ -847,7 +857,7 @@
             }
         }
 
-        document.body.onkeyup = function(ev){
+        document.body.onkeyup = function (ev) {
             /** MUTE/UNMUTE **/
             if (ev.keyCode == 32) {
                 toggleSound();
