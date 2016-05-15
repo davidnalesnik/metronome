@@ -220,38 +220,64 @@
         cork: 'sounds/pop-cork.mp3'
     };
 
-    var soundLibrary = {};
+    /**
+        Given an object associating keys with file names, return
+        another object replacing values with AudioBuffers, or
+        'false' for unsuccessful loads.
 
-    function loadSound(key, url) {
-        var fileCount = Object.keys(soundFiles).length;
-        var req = new XMLHttpRequest();
-        req.open('GET', url);
-        req.responseType = 'arraybuffer';
-        req.onload = function (response) {
-            if (req.status == 200) {
-                audioCtx.decodeAudioData(req.response, function (buffer) {
-                    soundLibrary[key] = buffer;
-                    // we assume that one file will be processed last...
-                    if (Object.keys(soundLibrary).length ==
-                        fileCount) {
-                        checkSoundAssociations();
+        When loading is completed, call procedures to fix associations
+        of sound types with unavailable buffers and create metronome
+        functionality.
+
+        If no sounds are available, proceed no further.
+    */
+    function buildSoundLibrary(fileArray) {
+        var fileCount = Object.keys(fileArray).length,
+            loadCount = 0,
+            failCount = 0;
+        var library = {};
+
+        function loadSound(key, url) {
+            var req = new XMLHttpRequest();
+            req.open('GET', url);
+            req.responseType = 'arraybuffer';
+            req.onload = function (response) {
+                if (req.status == 200) {
+                    audioCtx.decodeAudioData(req.response, function (
+                        buffer) {
+                        library[key] = buffer;
+                        loadCount++;
+                        if (loadCount == fileCount) {
+                            if (failCount) {
+                                checkSoundAssociations(library);
+                            }
+                            init();
+                        }
+                    });
+                } else {
+                    library[key] = false;
+                    loadCount++;
+                    failCount++;
+                    if (failCount == fileCount) {
+                        alert('No sounds could be loaded!');
+                    } else if (loadCount == fileCount) {
+                        checkSoundAssociations(library);
+                        init();
                     }
-                });
-            } else {
-                soundLibrary[key] = false;
-                if (Object.keys(soundLibrary).length == fileCount) {
-                    checkSoundAssociations();
                 }
+            };
+            req.send();
+        }
+
+        for (var sound in fileArray) {
+            if (fileArray.hasOwnProperty(sound)) {
+                loadSound(sound, fileArray[sound]);
             }
-        };
-        req.send();
+        }
+        return library;
     }
 
-    for (var key in soundFiles) {
-        if (soundFiles.hasOwnProperty(key)) {
-            loadSound(key, soundFiles[key]);
-        }
-    }
+    var soundLibrary = buildSoundLibrary(soundFiles);
 
     /**
         Make sure that classes of sound are associated with files that
@@ -259,46 +285,32 @@
 
         In case a type is paired with a sound which hasn't loaded,
         we assign it the default 'tock' if possible, the first
-        available sound we find if not.  If no sound is available, we
-        do not proceed any further.
+        available sound we find if not.
     */
-    function getAlternateAssociation(key) {
-        // Favor 'tock' as the default
-        if (soundLibrary.tock) {
-            return 'tock';
+
+    function getAlternateAssociation(library, preference) {
+        if (library[preference]) {
+            return preference;
         }
-        for (var sound in soundLibrary) {
-            if (soundLibrary.hasOwnProperty(sound) &&
-                soundLibrary[sound]) {
+        for (var sound in library) {
+            if (library.hasOwnProperty(sound) && library[sound]) {
                 return sound;
             }
         }
-        // A roundabout way of discovering that all sounds didn't load...
+        // all sounds didn't load
         return false;
     }
 
-    function checkSoundAssociations() {
-        var alternate,
-            haveAtLeastOneSound = true;
+    function checkSoundAssociations(library) {
         for (var key in soundAssociations) {
-            if (soundAssociations.hasOwnProperty(key)) {
-                if (!soundLibrary[soundAssociations[key]]) {
-                    alternate = getAlternateAssociation(key);
-                    if (!alternate) {
-                        haveAtLeastOneSound = false;
-                        break;
-                    }
-                    soundAssociations[key] = alternate;
-                }
+            if (soundAssociations.hasOwnProperty(key) && !library[
+                    soundAssociations[key]]) {
+                soundAssociations[key] = getAlternateAssociation(
+                    library, 'tock');
             }
         }
-
-        if (haveAtLeastOneSound) {
-            init();
-        } else {
-            alert('No sounds could be loaded!');
-        }
     }
+
     /**
         Called when sounds are loaded and associated with sound types.
     */
