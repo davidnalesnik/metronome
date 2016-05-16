@@ -7,7 +7,6 @@
     /**
         Create AudioContext.
     */
-
     try {
         window.AudioContext = window.AudioContext || window.webkitAudioContext;
         var audioCtx = new window.AudioContext();
@@ -35,14 +34,6 @@
         beatCountSelect = document.getElementById('beat-count-select'),
         bpm = document.getElementById('tempo-input'),
         mute = document.getElementById('mute');
-
-    /**
-        Show/hide options menu.
-    */
-    sideMenuToggle.onclick = function (ev) {
-        //ev.preventDefault();
-        this.parentNode.classList.toggle('show-side-menu');
-    };
 
     /**
         Default settings
@@ -141,8 +132,9 @@
         }
     }
 
+
     /**
-        Initial mute/unmute
+        Mute/unmute
     */
     var muted = initializeStoredVariable('muted', MUTED_DEFAULT);
 
@@ -150,31 +142,91 @@
         mute.classList.add('muted');
     }
 
+    function toggleSound() {
+        muted = !muted;
+        mute.classList.toggle('muted');
+        // So spacebar can be used right after mouseclick
+        // event listener for spacebar added in metronome
+        mute.blur();
+        setStoredVariable('muted', muted);
+    }
+
+    mute.onclick = toggleSound;
+
+
     /**
         Initial tempo
     */
     initializeStorableProperty(bpm, 'bpm', 'value', MM_DEFAULT);
 
+
     /**
-        Initial beat count
+        Beats
     */
     var numberOfBeats = initializeStoredVariable('numberOfBeats',
         BEAT_COUNT_DEFAULT);
 
+    var beat = numberOfBeats - 1;
+
     beatCountSelect[numberOfBeats - 2].setAttribute('selected', true);
 
     /**
-        Initial accent downbeat
+        Create visual display of beats on metronome body.  Add or remove
+        bubbles when a new size is selected.
     */
-    var accentDownbeat = initializeStoredVariable('accentDownbeat',
-        ACCENT_DOWNBEAT);
+    function addBeatBubble() {
+        var newBubble = document.createElement('div');
+        newBubble.setAttribute('class', 'beat-bubble');
+        beatBubbles.appendChild(newBubble);
+    }
 
-    downbeatAccentToggle.checked = accentDownbeat;
+    function removeBeatBubble() {
+        beatBubbles.removeChild(beatBubbles.lastElementChild);
+    }
+
+    function updateBeatDisplay() {
+        var beatsDrawnCount = visualBeats.length;
+        if (beatsDrawnCount < numberOfBeats) {
+            for (var i = 0; i < numberOfBeats - beatsDrawnCount; i++) {
+                addBeatBubble();
+            }
+        } else if (beatsDrawnCount > numberOfBeats) {
+            for (var j = 0; j < beatsDrawnCount - numberOfBeats; j++) {
+                removeBeatBubble();
+            }
+        }
+    }
+
+    updateBeatDisplay();
+
+    beatCountSelect.onchange = function () {
+        /**
+            When decreasing the length of the measure, the current
+            beat may be too large.  Resetting to zero (downbeat) is
+            the only sensible option.  We aren't concerned about
+            previousBeat in this case, because any bubble that would
+            be filled in is removed.
+        */
+        if (beat > this.value - 1) {
+            beat = 0;
+        }
+        numberOfBeats = beatCountSelect.value;
+        setStoredVariable('numberOfBeats', numberOfBeats);
+        updateBeatDisplay();
+        updateAccentedBeatToggles();
+    };
+
 
     /**
-        Initial beat visibility
+        Beat visibility
     */
     var beatVisible = initializeStoredVariable('beatVisible', BEAT_VISIBLE);
+
+    beatVisibilityToggle.onchange = function () {
+        beatVisible = this.checked;
+        beatBubbles.classList.toggle('hide');
+        setStoredVariable('beatVisible', beatVisible);
+    };
 
     beatVisibilityToggle.checked = beatVisible;
 
@@ -182,11 +234,83 @@
         beatBubbles.classList.add('hide');
     }
 
+
     /**
-        Initial sound associations
+        Accents
     */
-    var soundAssociations = initializeStoredVariable('soundAssociations',
-        SOUND_ASSOCIATIONS_DEFAULT);
+    var accentDownbeat = initializeStoredVariable('accentDownbeat',
+        ACCENT_DOWNBEAT);
+
+    function updateDownbeatAccent() {
+        accentDownbeat = this.checked;
+        downbeatAccentToggle.checked = accentDownbeat;
+    }
+
+    downbeatAccentToggle.checked = accentDownbeat;
+
+    downbeatAccentToggle.onchange = function () {
+        accentDownbeat = this.checked;
+        setStoredVariable('accentDownbeat', accentDownbeat);
+        // update metrical accent selector
+        document.getElementById('0').checked = accentDownbeat;
+    };
+
+    // Create DOM elements for accented beat selector
+    function updateAccentedBeatToggles() {
+        /**
+            Right now, whenever we update we start with a blank
+            slate.  More efficent to add and subtract as needed.
+        */
+        metricAccentToggles.innerHTML = '';
+        var accentToggle, label;
+        for (var i = 0; i < numberOfBeats; i++) {
+            label = document.createElement('label');
+            label.setAttribute('class', 'beat-label');
+            label.innerHTML = i + 1;
+            accentToggle = document.createElement('input');
+            accentToggle.setAttribute('type', 'checkbox');
+            if (i === 0) {
+                accentToggle.onchange = updateDownbeatAccent;
+                if (accentDownbeat) {
+                    accentToggle.setAttribute('checked', true);
+                }
+            }
+            accentToggle.setAttribute('id', i);
+            accentToggle.setAttribute('value', i);
+            label.appendChild(accentToggle);
+            metricAccentToggles.appendChild(label);
+        }
+    }
+
+    updateAccentedBeatToggles();
+
+
+    /**
+        OPTIONS
+    */
+
+    // Show/hide options menu.
+    sideMenuToggle.onclick = function (ev) {
+        this.parentNode.classList.toggle('show-side-menu');
+    };
+
+    // Show/hide selected side-menu options
+    var collection = document.getElementsByClassName('click-to-hide');
+    /**
+        For simplicity, we assume that the element to hide is the
+        next one at the same level.  We could add a class 'hideable'
+        and look for that class among the parent's children if we ever
+        need to break the pattern.  Or, we could surround the hideable
+        element with <label></label> instead of <a></a>
+    */
+    function toggleOptionVisibility() {
+        this.nextElementSibling.classList.toggle('hide');
+    }
+
+    for (var i = 0; i < collection.length; i++) {
+        collection[i].onclick = toggleOptionVisibility;
+    }
+
 
     /**
         LOAD SOUNDS
@@ -198,7 +322,7 @@
         Once all sounds are loaded, we make sure that every type of
         sound (ordinary default beat, accented downbeat, accented
         secondary beat, or subdivision) has a valid assignment.  If
-        so, we then call init.
+        so, we then call metronome.
 
         beep.mp3 derived from
         http://audiosoundclips.com/wp-content/uploads/2011/12/Beep.mp3
@@ -219,6 +343,9 @@
         woodblock: 'sounds/woodblock.mp3',
         cork: 'sounds/pop-cork.mp3'
     };
+
+    var soundAssociations = initializeStoredVariable('soundAssociations',
+        SOUND_ASSOCIATIONS_DEFAULT);
 
     /**
         Given an object associating keys with file names, return
@@ -251,7 +378,7 @@
                             if (failCount) {
                                 checkSoundAssociations(library);
                             }
-                            init();
+                            metronome();
                         }
                     });
                 } else {
@@ -262,7 +389,7 @@
                         alert('No sounds could be loaded!');
                     } else if (loadCount == fileCount) {
                         checkSoundAssociations(library);
-                        init();
+                        metronome();
                     }
                 }
             };
@@ -311,17 +438,12 @@
         }
     }
 
+
+
     /**
         Called when sounds are loaded and associated with sound types.
     */
-    function init() {
-        // Create DOM elements for beat display.
-        updateBeatDisplay();
-        // Create DOM elements for accented beat selector
-        updateAccentedBeatToggles();
-        // Add options to sound selection menu.
-        populateSoundMenu();
-
+    function metronome() {
         /**
             An array storing location of events within the repeating pattern
             (a single beat or a beat and its subdivisions).  Location is
@@ -347,15 +469,13 @@
         /**
             How much the first beep will happen after the start
             button is clicked.  We do this partly so that first beat is
-            not shortened -- noticeably so on my Samsung Galaxy SIII.
+            not shortened.
         */
         var startOffset = 0.4;
         var whereInBeat;
-        var previousBeat = numberOfBeats - 1,
-            beat;
+        var previousBeat = numberOfBeats - 1;
 
-        // default = no subdivision
-        var division = 1;
+        var division = 1; // no subdivision
         var playSubdivisions = false;
 
         var secondsPerBeat;
@@ -422,6 +542,21 @@
             }
         }
 
+        populateSoundMenu();
+
+        /**
+            If user input is out of supported bounds, modify it and display.
+        */
+        function getNormalizedInput(inp) {
+            if (inp < MM_MIN || inp > MM_MAX) {
+                inp = Math.max(MM_MIN, inp);
+                inp = Math.min(inp, MM_MAX);
+                // update display with normalized value
+                bpm.value = inp;
+            }
+            return inp;
+        }
+
         function setSecondsPerBeat() {
             var val = getNormalizedInput(bpm.value);
             secondsPerBeat = 60 / val;
@@ -430,19 +565,10 @@
             }
         }
 
-        function toggleSound() {
-            muted = !muted;
-            mute.classList.toggle('muted');
-            // So spacebar can be used right after mouseclick
-            mute.blur();
-            setStoredVariable('muted', muted);
-        }
-
         /**
             Create visual representation of beat.  Subdivisions are
             not shown.
         */
-
         function showBeat(b) {
             visualBeats[b].style.backgroundColor = 'red';
         }
@@ -470,66 +596,17 @@
             }
         }
 
-        /**
-            Add or remove beat bubbles when a new size is selected.
-        */
-
-        function addBeatBubble() {
-            var newBubble = document.createElement('div');
-            newBubble.setAttribute('class', 'beat-bubble');
-            beatBubbles.appendChild(newBubble);
-        }
-
-        function removeBeatBubble() {
-            beatBubbles.removeChild(beatBubbles.lastElementChild);
-        }
-
-        function updateBeatDisplay() {
-            var beatsDrawnCount = visualBeats.length;
-            if (beatsDrawnCount < numberOfBeats) {
-                for (var i = 0; i < numberOfBeats - beatsDrawnCount; i++) {
-                    addBeatBubble();
-                }
-            } else if (beatsDrawnCount > numberOfBeats) {
-                for (var j = 0; j < beatsDrawnCount - numberOfBeats; j++) {
-                    removeBeatBubble();
-                }
-            }
-        }
-
-        function updateDownbeatAccent() {
-            accentDownbeat = this.checked;
-            downbeatAccentToggle.checked = accentDownbeat;
-        }
-
-        function updateAccentedBeatToggles() {
-            /**
-                Right now, whenever we update we start with a blank
-                slate.  More efficent to add and subtract as needed.
-            */
-            metricAccentToggles.innerHTML = '';
-            var accentToggle, label;
-            for (var i = 0; i < numberOfBeats; i++) {
-                label = document.createElement('label');
-                label.setAttribute('class', 'beat-label');
-                label.innerHTML = i + 1;
-                accentToggle = document.createElement('input');
-                accentToggle.setAttribute('type', 'checkbox');
-                if (i === 0) {
-                    accentToggle.onchange = updateDownbeatAccent;
-                    if (accentDownbeat) {
-                        accentToggle.setAttribute('checked', true);
-                    }
-                }
-                accentToggle.setAttribute('id', i);
-                accentToggle.setAttribute('value', i);
-                label.appendChild(accentToggle);
-                metricAccentToggles.appendChild(label);
-            }
+        function scheduleSound(buffer, time, gain) {
+            var gainNode = audioCtx.createGain();
+            gainNode.gain.value = (muted) ? 0.0 : gain;
+            var bufferSource = audioCtx.createBufferSource();
+            bufferSource.buffer = buffer;
+            bufferSource.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            bufferSource.start(time);
         }
 
         function isBeatAccented(beat) {
-            // beat doesn't actually need to be parameter, but let's be safe
             return (beat === 0 && accentDownbeat) ||
                 document.getElementById(beat).checked;
         }
@@ -632,8 +709,7 @@
                     No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
                     0-1 have obvious effect, but values > 1 don't seem to
                     increase the volume at all.  Very high values distort
-                    sound.  Possibly there should be an option to use a
-                    different sound as an accent?
+                    sound.
                 */
                 //var gain = ((whereInBeat === 0) &&
                 //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : 1.0;
@@ -697,21 +773,21 @@
 
         on.onclick = function () {
             /**
-                This is necessary on Safari(tested on iPhone 5S, iOS 9.3.1).
-                See https://bugs.chromium.org/p/chromium/issues/detail?id=159359
-                audioCtx.currentTime stays locked at 0 until some API call
-                is made, so we make a dummy gainNode here.
-
-                Also, it seems we need to do this in response to a user
-                event, hence placement in event handler.
-            */
-            audioCtx.createGain();
-            setSecondsPerBeat();
-            /**
                 We only honor the first click of start button.  While count
                 is in progress, all clicks are ignored.
             */
             if (!beepFrame) {
+                /**
+                    This is necessary on Safari(tested on iPhone 5S, iOS 9.3.1).
+                    See https://bugs.chromium.org/p/chromium/issues/detail?id=159359
+                    audioCtx.currentTime stays locked at 0 until some API call
+                    is made, so we make a dummy gainNode here.
+
+                    Also, it seems we need to do this in response to a user
+                    event, hence placement in event handler.
+                */
+                audioCtx.createGain();
+                setSecondsPerBeat();
                 countJustBegun = true;
                 endRequested = false;
                 /**
@@ -748,41 +824,6 @@
         };
 
         /**
-            OPTIONS
-        */
-
-        // Downbeat accent
-        downbeatAccentToggle.onchange = function () {
-            accentDownbeat = this.checked;
-            setStoredVariable('accentDownbeat', accentDownbeat);
-            // update metrical accent selector
-            document.getElementById('0').checked = accentDownbeat;
-        };
-
-        // Show beats
-        beatVisibilityToggle.onchange = function () {
-            beatVisible = this.checked;
-            beatBubbles.classList.toggle('hide');
-            setStoredVariable('beatVisible', beatVisible);
-        };
-
-        // Show/hide selected side-menu options
-        var collection = document.getElementsByClassName('click-to-hide');
-        /**
-            For simplicity, we assume that the element to hide is the
-            next one at the same level.  We could add a class 'hideable'
-            and look for that class among the parent's children if we ever
-            need to break the pattern.  Or, we could surround the hideable
-            element with <label></label> instead of <a></a>
-        */
-        function toggleOptionVisibility() {
-            this.nextElementSibling.classList.toggle('hide');
-        }
-
-        for (var i = 0; i < collection.length; i++) {
-            collection[i].onclick = toggleOptionVisibility;
-        }
-        /**
             Subdivide
         */
         subdivide.onclick = function () {
@@ -806,23 +847,6 @@
             }
         };
 
-        beatCountSelect.onchange = function () {
-            /**
-                When decreasing the length of the measure, the current
-                beat may be too large.  Resetting to zero (downbeat) is
-                the only sensible option.  We aren't concerned about
-                previousBeat in this case, because any bubble that would
-                be filled in is removed.
-            */
-            if (beat > this.value - 1) {
-                beat = 0;
-            }
-            numberOfBeats = beatCountSelect.value;
-            setStoredVariable('numberOfBeats', numberOfBeats);
-            updateBeatDisplay();
-            updateAccentedBeatToggles();
-        };
-
         /**
             SOUND
 
@@ -836,7 +860,6 @@
             Tapping on 't' 5 times in a new tempo will change the
             metronome's rate.
         */
-        mute.onclick = toggleSound;
 
         function setTappedTempo(ev) {
             ev.preventDefault();
@@ -869,6 +892,10 @@
             }
         }
 
+        tempoTapTarget.onclick = setTappedTempo;
+
+        tempoTapTarget.touchstart = setTappedTempo;
+
         document.body.onkeyup = function (ev) {
             /** MUTE/UNMUTE **/
             if (ev.keyCode == 32) {
@@ -879,32 +906,5 @@
                 setTappedTempo(ev);
             }
         };
-
-        tempoTapTarget.onclick = setTappedTempo;
-
-        tempoTapTarget.touchstart = setTappedTempo;
-    }
-
-    function scheduleSound(buffer, time, gain) {
-        var gainNode = audioCtx.createGain();
-        gainNode.gain.value = (muted) ? 0.0 : gain;
-        var bufferSource = audioCtx.createBufferSource();
-        bufferSource.buffer = buffer;
-        bufferSource.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        bufferSource.start(time);
-    }
-
-    /**
-        If user input is out of supported bounds, modify it and display.
-    */
-    function getNormalizedInput(inp) {
-        if (inp < MM_MIN || inp > MM_MAX) {
-            inp = Math.max(MM_MIN, inp);
-            inp = Math.min(inp, MM_MAX);
-            // update display with normalized value
-            bpm.value = inp;
-        }
-        return inp;
     }
 })();
