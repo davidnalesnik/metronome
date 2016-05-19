@@ -635,11 +635,7 @@
         */
         function advanceBeat() {
             previousBeat = beat;
-            if (beat === numberOfBeats - 1) {
-                beat = 0;
-            } else {
-                beat++;
-            }
+            beat = (beat === numberOfBeats - 1) ? 0 : beat + 1;
         }
 
         /**
