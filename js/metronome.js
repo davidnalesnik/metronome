@@ -1,12 +1,6 @@
-/**
-    TODO:
-    - collect more sounds
-    - remember more settings between sessions (meter, subdivision)
-*/
 (function () {
-    /**
-        Create AudioContext.
-    */
+
+    // create AudioContext
     try {
         window.AudioContext = window.AudioContext || window.webkitAudioContext;
         var audioCtx = new window.AudioContext();
@@ -14,9 +8,7 @@
         alert('Web Audio API support required.');
     }
 
-    /**
-        DOM selectors
-    */
+    // DOM selectors
     var sideMenuToggle = document.getElementById('side-menu-toggle'),
         downbeatAccentToggle = document.getElementById(
             'downbeat-accent-toggle'),
@@ -35,9 +27,7 @@
         bpm = document.getElementById('tempo-input'),
         mute = document.getElementById('mute');
 
-    /**
-        Default settings
-    */
+    // default settings
     var MUTED_DEFAULT = false,
         MM_DEFAULT = 60,
         MM_MIN = 1,
@@ -53,12 +43,10 @@
             'subdivision-sound': 'woodblock'
         };
 
-    /**
+    /*
         DATA STORAGE
 
-        If possible, settings persist between sessions.
-
-        We remember the following:
+        We attempt to remember the following:
          - whether sound is muted,
          - the tempo,
          - the number of beats,
@@ -66,14 +54,13 @@
          - whether downbeats are accented,
          - and sound assignments.
 
-        If the browser does not support the Web Storage API, we will
-        use default values.
+        If the browser does not support the Web Storage API, use default values.
+
+        TODO: remember more settings (meter, subdivision)
     */
 
-    /**
-        Check if we can store data between browser sessions.  Function taken from
-        https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
-    */
+    // Can we store data between browser sessions?  Function from
+    // https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
     function storageAvailable(type) {
         try {
             var storage = window[type],
@@ -87,8 +74,6 @@
     }
 
     var haveLocalStorage = storageAvailable('localStorage');
-    // for testing:
-    //haveLocalStorage = false;
 
     function setStoredVariable(name, val) {
         if (haveLocalStorage) {
@@ -96,13 +81,8 @@
         }
     }
 
-    /**
-        Used at the beginning of a session for managing a variable
-        that may be in storage.
-
-        Since the function returns a value, it may be used as an
-        initializer.
-    */
+    // Use at the beginning of a session for managing a variable that may be
+    // in storage.  Returns a value so may be used as an initializer.
     function initializeStoredVariable(name, val) {
         if (haveLocalStorage) {
             var setting = localStorage.getItem(name);
@@ -114,10 +94,8 @@
         return val;
     }
 
-    /**
-        Used at the beginning of a session for setting DOM attributes to
-        values that may be in storage.
-    */
+    // Use at the beginning of a session for setting DOM attributes to
+    // values that may be in storage.
     function initializeStorableProperty(elt, name, prop, val) {
         if (haveLocalStorage) {
             var setting = localStorage.getItem(name);
@@ -132,10 +110,8 @@
         }
     }
 
+    // Mute/unmute
 
-    /**
-        Mute/unmute
-    */
     var muted = initializeStoredVariable('muted', MUTED_DEFAULT);
 
     if (muted) {
@@ -153,16 +129,11 @@
 
     mute.onclick = toggleSound;
 
-
-    /**
-        Initial tempo
-    */
+    // initial tempo
     initializeStorableProperty(bpm, 'bpm', 'value', MM_DEFAULT);
 
+    // beats
 
-    /**
-        Beats
-    */
     var numberOfBeats = initializeStoredVariable('numberOfBeats',
         BEAT_COUNT_DEFAULT);
 
@@ -170,10 +141,9 @@
 
     beatCountSelect[numberOfBeats - 2].setAttribute('selected', true);
 
-    /**
-        Create visual display of beats on metronome body.  Add or remove
-        bubbles when a new size is selected.
-    */
+    // Create visual display of beats on metronome body.  Add or remove
+    // bubbles when a new size is selected.
+
     function addBeatBubble() {
         var newBubble = document.createElement('div');
         newBubble.setAttribute('class', 'beat-bubble');
@@ -200,13 +170,10 @@
     updateBeatDisplay();
 
     beatCountSelect.onchange = function () {
-        /**
-            When decreasing the length of the measure, the current
-            beat may be too large.  Resetting to zero (downbeat) is
-            the only sensible option.  We aren't concerned about
-            previousBeat in this case, because any bubble that would
-            be filled in is removed.
-        */
+        // When decreasing the length of the measure, the current beat may be
+        // too large.  Resetting to zero (downbeat) is the only sensible option.
+        // We aren't concerned about previousBeat in this case, because any
+        // bubble that would be filled in is removed.
         if (beat > this.value - 1) {
             beat = 0;
         }
@@ -216,10 +183,8 @@
         updateAccentedBeatToggles();
     };
 
+    // visibility or beats on metronome body
 
-    /**
-        Beat visibility
-    */
     var beatVisible = initializeStoredVariable('beatVisible', BEAT_VISIBLE);
 
     beatVisibilityToggle.onchange = function () {
@@ -235,9 +200,8 @@
     }
 
 
-    /**
-        Accents
-    */
+    // accents
+
     var accentDownbeat = initializeStoredVariable('accentDownbeat',
         ACCENT_DOWNBEAT);
 
@@ -256,11 +220,9 @@
     };
 
     // Create DOM elements for accented beat selector
+
     function updateAccentedBeatToggles() {
-        /**
-            Right now, whenever we update we start with a blank
-            slate.  More efficent to add and subtract as needed.
-        */
+        // Start with a blank when updating.  Maybe add and subtract as needed?
         metricAccentToggles.innerHTML = '';
         var accentToggle, label;
         for (var i = 0; i < numberOfBeats; i++) {
@@ -285,25 +247,17 @@
     updateAccentedBeatToggles();
 
 
-    /**
-        OPTIONS
-    */
-
-    // Show/hide options menu.
+    // side menu visibility
     sideMenuToggle.onclick = function (ev) {
         this.parentNode.classList.toggle('show-side-menu');
     };
 
     // Show/hide selected side-menu options
+
     var collection = document.getElementsByClassName('click-to-hide');
-    /**
-        For simplicity, we assume that the element to hide is the
-        next one at the same level.  We could add a class 'hideable'
-        and look for that class among the parent's children if we ever
-        need to break the pattern.  Or, we could surround the hideable
-        element with <label></label> instead of <a></a>
-    */
+
     function toggleOptionVisibility() {
+        // assume that the element to hide is next at the same level
         this.nextElementSibling.classList.toggle('hide');
     }
 
@@ -312,7 +266,7 @@
     }
 
 
-    /**
+    /*
         LOAD SOUNDS
 
         Retrieve sounds and store decoded data in soundLibrary object
@@ -335,6 +289,8 @@
 
         pop-cork.mp3 derived from clip at http://soundbible.com/533-Pop-Cork.html,
         recorded by Mike Koenig
+
+        TODO: collect more sounds
     */
 
     var soundFiles = {
@@ -347,17 +303,11 @@
     var soundAssociations = initializeStoredVariable('soundAssociations',
         SOUND_ASSOCIATIONS_DEFAULT);
 
-    /**
-        Given an object associating keys with file names, return
-        another object replacing values with AudioBuffers, or
-        'false' for unsuccessful loads.
-
-        When loading is completed, call procedures to fix associations
-        of sound types with unavailable buffers and create metronome
-        functionality.
-
-        If no sounds are available, proceed no further.
-    */
+    // Given an object associating keys with file names, return another object
+    // replacing values with AudioBuffers, or 'false' for unsuccessful loads.
+    // When loading is completed, call procedures to fix associations of sound
+    // types with unavailable buffers and create metronome functionality.  If
+    // no sounds are available, proceed no further.
     function buildSoundLibrary(fileArray) {
         var fileCount = Object.keys(fileArray).length,
             loadCount = 0,
@@ -406,15 +356,9 @@
 
     var soundLibrary = buildSoundLibrary(soundFiles);
 
-    /**
-        Make sure that classes of sound are associated with files that
-        have loaded successfully.
-
-        In case a type is paired with a sound which hasn't loaded,
-        we assign it the default 'tock' if possible, the first
-        available sound we find if not.
-    */
-
+    // Make sure that classes of sound are associated with files that have
+    // loaded successfully.  Use the default 'tock' if possible, the first
+    // available sound we find if not.
     function getAlternateAssociation(library, preference) {
         if (library[preference]) {
             return preference;
@@ -438,40 +382,25 @@
         }
     }
 
+    /************************* MAIN FUNCTION ****************************/
 
-
-    /**
-        Called when sounds are loaded and associated with sound types.
-    */
     function metronome() {
-        /**
-            An array storing location of events within the repeating pattern
-            (a single beat or a beat and its subdivisions).  Location is
-            expressed as a floating-point number between 0.0 and 1.0.  This
-            will be multiplied by secondsPerBeat to give the offset in
-            seconds.
-        */
+        // array storing location of events within the repeating pattern
+        // (a single beat or a beat and its subdivisions), expressed as
+        // a number between 0.0 and 1.0
         var pattern = [0.0];
-        /**
-            Flags representing initiation and termination of a count.
-        */
+
+        // flags representing initiation and termination of a count
         var countJustBegun,
-            endRequested;
-        /**
-            Flag representing final end of count.  (There is a wrap-up
-            after the user requests an end.)
-        */
-        var wrapUpCount = false;
-        /**
-            Stores id for animation frame to control repetition/stop of count.
-        */
-        var beepFrame = false;
-        /**
-            How much the first beep will happen after the start
-            button is clicked.  We do this partly so that first beat is
-            not shortened.
-        */
+            endRequested,
+            wrapUpCount = false;
+
+        var beepFrame = false; // animation frame
+
+        // How much the first beep will happen after the start button is
+        // clicked.  An offset ensures that first beat is not shortened.
         var startOffset = 0.4;
+
         var whereInBeat;
         var previousBeat = numberOfBeats - 1;
 
@@ -479,15 +408,12 @@
         var playSubdivisions = false;
 
         var secondsPerBeat;
-        /**
-            Flag indicating whether we have changed tempo or changed to
-            subdivisions or back to beats only.
-        */
+
+        // Have we changed tempo or changed to subdivisions or back to beats only?
         var handleRateChange = false;
-        /**
-            Local tempo; needed b/c we only change tempo by the pattern
-            statement, though the user can request a change at any time.
-        */
+
+        // Local tempo.  (We only change tempo by the pattern statement, though
+        // the user can request a change at any time.
         var patternSeconds,
             patternStartTime;
 
@@ -496,22 +422,15 @@
 
         var tempoTapperArray = [];
 
-        /*************************** FUNCTIONS *****************************/
 
-        /**
-            Update soundAssociations object based on selection from the
-            sound menu.
-        */
+        // update soundAssociations based on selection from the sound menu
         function registerSoundSelection() {
             soundAssociations[this.id] = this.options[this.selectedIndex].value;
             setStoredVariable('soundAssociations', soundAssociations);
         }
 
-        /**
-            Build option lists for sound selection.  Select the
-            assignments for each role based on soundAssociations
-            object.
-        */
+        // Build option lists for sound selection.  Select the assignments for
+        // each role based on soundAssociations object.
         function populateSoundMenu() {
             var menuElements = document.getElementsByClassName(
                 'sound-menu-element');
@@ -520,11 +439,9 @@
                 toSelect;
             for (var i = 0; i < menuElements.length; i++) {
                 currentElement = menuElements[i];
-                /**
-                    IMPORTANT: DOM ids and soundAssociation keys MUST match
-                    for this to work.  Possibly we ought to set ids from this
-                    object so there is no chance for mistakes to occur.
-                */
+                // IMPORTANT: DOM ids and soundAssociation keys MUST match
+                // for this to work.  Possibly we ought to set ids from this
+                // object so there is no chance for mistakes to occur.
                 toSelect = soundAssociations[currentElement.id];
                 for (var sound in soundLibrary) {
                     if (soundLibrary.hasOwnProperty(sound) &&
@@ -544,9 +461,7 @@
 
         populateSoundMenu();
 
-        /**
-            If user input is out of supported bounds, modify it and display.
-        */
+        // If user input is out of supported bounds, modify it and display.
         function getNormalizedInput(inp) {
             if (inp < MM_MIN || inp > MM_MAX) {
                 inp = Math.max(MM_MIN, inp);
@@ -565,10 +480,8 @@
             }
         }
 
-        /**
-            Create visual representation of beat.  Subdivisions are
-            not shown.
-        */
+        // Create visual representation of beat.  Subdivisions are not shown.
+
         function showBeat(b) {
             visualBeats[b].style.backgroundColor = 'red';
         }
@@ -577,19 +490,14 @@
             visualBeats[b].style.backgroundColor = 'white';
         }
 
-        /**
-            Light the current beat and clear the previous beat.
-            When the count is over, clear the current beat.
-        */
+        // Light the current beat and clear the previous beat.  When the count
+        // is over, clear the current beat.
         function updateDisplay() {
             if (wrapUpCount) {
                 hideBeat(beat);
             } else {
                 showBeat(beat);
-                /**
-                    If number of beats is reduced, previousBeat may
-                    be out-of-bounds.
-                */
+                // If number of beats is reduced, previousBeat may be out-of-bounds.
                 if (previousBeat < numberOfBeats) {
                     hideBeat(previousBeat);
                 }
@@ -611,9 +519,7 @@
                 document.getElementById(beat).checked;
         }
 
-        /**
-            Return a sound buffer based on metric assignments.
-        */
+        // Return a sound buffer based on metric assignments.
         function getSoundBuffer() {
             // subdivision
             if (whereInBeat !== 0) {
@@ -629,21 +535,15 @@
                 soundLibrary[soundAssociations['secondary-accent-sound']];
         }
 
-        /**
-            Advance beat and previousBeat.  (Beat is used to
-            fill in bubbles, previousBeat to clear them.)
-        */
+        // advance beat and previousBeat
         function advanceBeat() {
             previousBeat = beat;
             beat = (beat === numberOfBeats - 1) ? 0 : beat + 1;
         }
 
-        /**
-            Build a new beat profile.
-
-            Only call this from beepSequence (i.e., when pattern changes are
-            processed) so whereInBeat is always in sync with the beat pattern.
-        */
+        // Build a new beat profile.  Only call this from beepSequence (i.e.,
+        // when pattern changes are processed) so whereInBeat is always in
+        // sync with the beat pattern.
         function updatePattern() {
             pattern = [0.0];
             if (division > 1) {
@@ -653,38 +553,26 @@
             }
         }
 
-        /**
-            This function schedules single sounds.  The times will
-            also be used for visual events.
-
-            Notes are scheduled one at a time to allow for quick response
-            to user input.
-        */
+        // Schedule single sounds.  Times will also be used for visual events.
+        // Notes are scheduled one at a time to allow for quick response to user
+        // input.
         function beep() {
             if (wrapUpCount) {
                 wrapUpCount = false;
                 cancelAnimationFrame(beepFrame); // necessary?
                 beepFrame = false;
             } else {
-                /**
-                    Advance beat and where we are in beat pattern.
-
-                    Process any changes of division and tempo when
-                    beat advances.
-                */
+                // Advance beat and where we are in beat pattern.  Process any
+                // changes of division and tempo when beat advances.
                 if (whereInBeat === pattern.length - 1) {
                     whereInBeat = 0;
                     if (!endRequested) {
                         advanceBeat();
                     }
-                    /**
-                        If a change is requested, the arrival of the new
-                        beat pattern statement happens according to the
-                        old tempo.  Then the new settings take effect.
-
-                        Don't delay the very first beat by the beat
-                        length, though.
-                    */
+                    // If a change is requested, the arrival of the new beat
+                    // pattern statement happens according to the old tempo.
+                    // Then the new settings take effect.  Don't delay the very
+                    // first beat by the beat length, though.
                     if (!countJustBegun) {
                         patternStartTime += patternSeconds;
                     }
@@ -699,14 +587,10 @@
 
                 newNoteTime = patternStartTime + pattern[whereInBeat] *
                     patternSeconds;
-                /**
-                    Select volume of note based on accent pattern.
-
-                    No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
-                    0-1 have obvious effect, but values > 1 don't seem to
-                    increase the volume at all.  Very high values distort
-                    sound.
-                */
+                // Select volume of note based on accent pattern.
+                // No appreciable effect on Firefox 44.0.2 or 46.0.1.  Values
+                // 0-1 have obvious effect, but values > 1 don't seem to increase
+                // the volume at all.  Very high values distort sound.
                 //var gain = ((whereInBeat === 0) &&
                 //((beat === 0 && accentDownbeat) || isBeatAccented(beat))) ? 3.0 : 1.0;
 
@@ -725,7 +609,8 @@
                 lastNoteTime = newNoteTime;
             }
         }
-        /**
+
+        /*
             Oversee the audio and visual aspects of a count.
 
             Right now, audio scheduling and video updates are in lockstep:
@@ -741,24 +626,12 @@
             one more time to use for clearing the last beat on the screen.
         */
         function beepSequence() {
-            /**
-                When the current time reaches a scheduled time,
-                update the display and schedule another note.
-            */
             if (audioCtx.currentTime >= lastNoteTime) {
-                /**
-                    If we have just begun a count, we don't want to call
-                    display because the beginning cycle schedules a future
-                    audio event.
-
-                    Checking whether whereInBeat is 0 limits display to
-                    beats rather than every subdivision.
-                */
+                // No display with first scheduling pass or subdivisions
                 if ((!countJustBegun && whereInBeat === 0) || wrapUpCount) {
                     updateDisplay();
                 }
-                // sound
-                beep();
+                beep(); // sound
             }
             // beepFrame will be false when ending
             return !beepFrame || requestAnimationFrame(beepSequence);
@@ -768,41 +641,35 @@
         /************************ EVENT HANDLERS **************************/
 
         on.onclick = function () {
-            /**
-                We only honor the first click of start button.  While count
-                is in progress, all clicks are ignored.
-            */
-            if (!beepFrame) {
-                /**
-                    This is necessary on Safari(tested on iPhone 5S, iOS 9.3.1).
-                    See https://bugs.chromium.org/p/chromium/issues/detail?id=159359
-                    audioCtx.currentTime stays locked at 0 until some API call
-                    is made, so we make a dummy gainNode here.
 
-                    Also, it seems we need to do this in response to a user
-                    event, hence placement in event handler.
-                */
+            // disregard multiple clicks of start button
+            if (!beepFrame) {
+
+                // Dummy gainNode is to get currentTime moving on Safari.  See
+                // https://bugs.chromium.org/p/chromium/issues/detail?id=159359
+                // We need to do this in response to a user event.
                 audioCtx.createGain();
+
                 setSecondsPerBeat();
                 countJustBegun = true;
                 endRequested = false;
-                /**
-                    Set beat to last beat of count.  It will be incremented
-                    to 0 when beepSequence is called.
-                */
+
+                // Set beat to last beat of count.  It will be incremented to 0
+                // when beepSequence is called.
                 beat = numberOfBeats - 1;
                 patternSeconds = secondsPerBeat;
                 patternStartTime = audioCtx.currentTime + startOffset;
-                // set to -1 so beepSequence loop triggers immediately
+
+                // set so beepSequence loop triggers immediately
                 lastNoteTime = -1;
-                /**
-                    Set to last note of the pattern.  Subdivisions are
-                    processed as a change, and beepSequence only allows
-                    changes when we reach the last note of a pattern.  We
-                    will start with the right note b/c whereInBeat is
-                    set to 0 after changes are processed.
-                */
+
+                // Set to last note of the pattern.  Subdivisions are processed
+                // as a change, and beepSequence only allows changes when we
+                // reach the last note of a pattern.  We will start with the
+                // right note b/c whereInBeat is set to 0 after changes are
+                // processed.
                 whereInBeat = pattern.length - 1;
+
                 beepFrame = requestAnimationFrame(beepSequence);
             }
         };
@@ -811,19 +678,15 @@
             endRequested = true;
         };
 
-        /**
-            Set a new speed.
-        */
+        // set a new speed
         bpm.onchange = function () {
             setSecondsPerBeat();
             handleRateChange = true;
         };
 
-        /**
-            Subdivide
-        */
+        // subdivide
         subdivide.onclick = function () {
-            playSubdivisions = !playSubdivisions; // toggle
+            playSubdivisions = !playSubdivisions;
 
             if (playSubdivisions) {
                 division = divisions.value;
@@ -843,28 +706,14 @@
             }
         };
 
-        /**
-            SOUND
-
-            Pressing mute/unmute button or spacebar toggles sound.
-
-            Spacebar usually reserved for start/stop -- better choice
-            for mute/unmute?
-
-            TEMPO TAPPER
-
-            Tapping on 't' 5 times in a new tempo will change the
-            metronome's rate.
-        */
+        // TEMPO TAPPER.  Pressing 't' 5 times or clicking/tapping on the circle
+        // on the metronome body containing 'T' in a new tempo will change the
+        // metronome's rate.
 
         function setTappedTempo(ev) {
             ev.preventDefault();
             var tapTime = audioCtx.currentTime;
-            /**
-                If there have been more than four seconds since the
-                last "tap," assume that previous sequence has been
-                left incomplete and begin anew.
-            */
+            // reset after four seconds since the last tap
             if (tempoTapperArray &&
                 tapTime - tempoTapperArray[tempoTapperArray.length - 1] > 4
             ) {
@@ -893,11 +742,11 @@
         tempoTapTarget.touchstart = setTappedTempo;
 
         document.body.onkeyup = function (ev) {
-            /** MUTE/UNMUTE **/
+            // MUTE/UNMUTE = spacebar
             if (ev.keyCode == 32) {
                 toggleSound();
             }
-            /** TEMPO TAPPER **/
+            // TEMPO TAPPER = 't'
             if (ev.keyCode == 84) {
                 setTappedTempo(ev);
             }
